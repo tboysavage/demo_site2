@@ -25,28 +25,48 @@ export const metadata: Metadata = {
 
 type CardProps = (typeof groups)[number]["cards"][number];
 
+type NormalizedCard = {
+  id: string;
+  title: string;
+  subtitle?: string;
+  description?: readonly string[];
+  description2?: string;
+  bullets?: readonly string[];
+  price?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+};
+
+function normalizeCard(card: CardProps): NormalizedCard {
+  if ("subtitle" in card && "description2" in card) {
+    return card as NormalizedCard;
+  }
+  return card as NormalizedCard;
+}
+
 function BloodScreeningCard({ card }: { card: CardProps }) {
+  const normalized = normalizeCard(card);
   return (
     <div className="flex h-full flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <div className="space-y-4">
         <div>
-          <h3 className="text-lg font-semibold text-slate-900">{card.title}</h3>
-          {card.subtitle ? (
+          <h3 className="text-lg font-semibold text-slate-900">{normalized.title}</h3>
+          {normalized.subtitle ? (
             <p className="mt-2 text-sm font-semibold text-[var(--accent-strong)]">
-              {card.subtitle}
+              {normalized.subtitle}
             </p>
           ) : null}
         </div>
-        {card.description?.length ? (
+        {normalized.description?.length ? (
           <div className="space-y-2 text-sm text-muted">
-            {card.description.map((line) => (
+            {normalized.description.map((line) => (
               <p key={line}>{line}</p>
             ))}
           </div>
         ) : null}
-        {card.bullets?.length ? (
+        {normalized.bullets?.length ? (
           <ul className="space-y-2 text-sm text-slate-600">
-            {card.bullets.map((item) => (
+            {normalized.bullets.map((item) => (
               <li key={item} className="flex gap-2">
                 <span className="mt-1 h-2 w-2 rounded-full bg-[var(--accent-strong)]" />
                 <span>{item}</span>
@@ -54,20 +74,22 @@ function BloodScreeningCard({ card }: { card: CardProps }) {
             ))}
           </ul>
         ) : null}
-        {card.description2 ? <p className="text-sm text-muted">{card.description2}</p> : null}
+        {normalized.description2 ? (
+          <p className="text-sm text-muted">{normalized.description2}</p>
+        ) : null}
       </div>
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        {card.price ? (
+        {normalized.price ? (
           <span className="rounded-full bg-[var(--ink-strong)] px-3 py-1 text-xs font-semibold text-white">
-            {card.price}
+            {normalized.price}
           </span>
         ) : null}
-        {card.ctaLabel ? (
+        {normalized.ctaLabel ? (
           <a
-            href={card.ctaHref ?? "/contact"}
+            href={normalized.ctaHref ?? "/contact"}
             className="inline-flex items-center justify-center rounded-full border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700"
           >
-            {card.ctaLabel}
+            {normalized.ctaLabel}
           </a>
         ) : null}
       </div>
