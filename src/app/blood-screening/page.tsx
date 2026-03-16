@@ -1,12 +1,27 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import SectionHeading from "@/components/SectionHeading";
+import BloodScreeningGroupPanel from "@/components/BloodScreeningGroupPanel";
 import Tabs, { TabItem } from "@/components/Tabs";
 import Accordion from "@/components/Accordion";
-import { bloodScreeningContent } from "@/content/bloodScreening";
+import { bloodScreeningContent, type BloodScreeningGroup } from "@/content/bloodScreening";
 import { clinicUltrasoundScansContent } from "@/content/clinicUltrasoundScans";
 
-const { hero, groups } = bloodScreeningContent;
+const { hero, groups, preparation, faqs } = bloodScreeningContent;
 const { site, brand } = clinicUltrasoundScansContent;
+const typedGroups = groups as readonly BloodScreeningGroup[];
+const packageGroups = typedGroups.filter((group) =>
+  group.cards.some((card) => (card.kind ?? "info") === "package"),
+);
+const informationGroups = typedGroups.filter((group) =>
+  group.cards.every((card) => (card.kind ?? "info") !== "package"),
+);
+const informationCallouts = typedGroups
+  .filter((group) => group.callout)
+  .map((group) => ({
+    groupTitle: group.title,
+    callout: group.callout!,
+  }));
 
 export const metadata: Metadata = {
   title: hero.title,
@@ -23,150 +38,163 @@ export const metadata: Metadata = {
   },
 };
 
-type CardProps = (typeof groups)[number]["cards"][number];
+const faqItems = faqs.map((faq, index) => ({
+  id: `blood-faq-${index}`,
+  title: faq.question,
+  content: <p>{faq.answer}</p>,
+}));
 
-type NormalizedCard = {
-  id: string;
-  title: string;
-  subtitle?: string;
-  description?: readonly string[];
-  description2?: string;
-  bullets?: readonly string[];
-  price?: string;
-  ctaLabel?: string;
-  ctaHref?: string;
-};
-
-function normalizeCard(card: CardProps): NormalizedCard {
-  if ("subtitle" in card && "description2" in card) {
-    return card as NormalizedCard;
-  }
-  return card as NormalizedCard;
-}
-
-function BloodScreeningCard({ card }: { card: CardProps }) {
-  const normalized = normalizeCard(card);
-  return (
-    <div className="flex h-full flex-col justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="space-y-4">
-        <div>
-          <h3 className="text-lg font-semibold text-slate-900">{normalized.title}</h3>
-          {normalized.subtitle ? (
-            <p className="mt-2 text-sm font-semibold text-[var(--accent-strong)]">
-              {normalized.subtitle}
-            </p>
-          ) : null}
-        </div>
-        {normalized.description?.length ? (
-          <div className="space-y-2 text-sm text-muted">
-            {normalized.description.map((line) => (
-              <p key={line}>{line}</p>
-            ))}
-          </div>
-        ) : null}
-        {normalized.bullets?.length ? (
-          <ul className="space-y-2 text-sm text-slate-600">
-            {normalized.bullets.map((item) => (
-              <li key={item} className="flex gap-2">
-                <span className="mt-1 h-2 w-2 rounded-full bg-[var(--accent-strong)]" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-        {normalized.description2 ? (
-          <p className="text-sm text-muted">{normalized.description2}</p>
-        ) : null}
-      </div>
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        {normalized.price ? (
-          <span className="rounded-full bg-[var(--ink-strong)] px-3 py-1 text-xs font-semibold text-white">
-            {normalized.price}
-          </span>
-        ) : null}
-        {normalized.ctaLabel ? (
-          <a
-            href={normalized.ctaHref ?? "/contact"}
-            className="inline-flex items-center justify-center rounded-full border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700"
-          >
-            {normalized.ctaLabel}
-          </a>
-        ) : null}
-      </div>
-    </div>
-  );
-}
-
-const faqItems = groups
-  .find((group) => group.id === "faqs")
-  ?.cards.map((card, index) => ({
-    id: `blood-faq-${index}`,
-    title: card.title,
-    content: (
-      <div className="space-y-2">
-        {card.description?.map((line) => (
-          <p key={line}>{line}</p>
-        ))}
-      </div>
-    ),
-  }));
-
-const tabItems: TabItem[] = groups.map((group) => ({
+const tabItems: TabItem[] = packageGroups.map((group) => ({
   id: group.id,
   label: group.title,
   description: group.description,
-  content:
-    group.id === "faqs" ? (
-      <div className="space-y-6">
-        <p className="text-sm text-muted">{group.description}</p>
-        {faqItems ? <Accordion items={faqItems} /> : null}
-      </div>
-    ) : (
-      <div className="space-y-6">
-        {group.description ? <p className="text-sm text-muted">{group.description}</p> : null}
-        <div className="grid gap-6 lg:grid-cols-2">
-          {group.cards.map((card) => (
-            <BloodScreeningCard key={card.id} card={card} />
-          ))}
-        </div>
-      </div>
-    ),
+  content: <BloodScreeningGroupPanel group={group} />,
 }));
 
 export default function BloodScreeningPage() {
   return (
     <div className="pb-24">
-      <section className="mx-auto max-w-6xl px-4 py-16">
-        <div className="space-y-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--accent-strong)]">
-            {hero.title}
-          </p>
-          <h1 className="font-display text-4xl text-slate-900 sm:text-5xl">{hero.headline}</h1>
-          <p className="text-base text-muted sm:text-lg">{hero.intro}</p>
-          <div className="flex flex-wrap gap-4">
-            <a
-              href="/services/clinic-ultrasound-scans#booking"
-              className="rounded-full bg-[var(--accent-strong)] px-6 py-3 text-sm font-semibold text-white"
-            >
-              {hero.primaryCta}
-            </a>
-            <a
-              href="/contact"
-              className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700"
-            >
-              {hero.secondaryCta}
-            </a>
+      <section className="mx-auto max-w-6xl px-4 pb-10">
+        <div className="mt-10 relative flex min-h-[64svh] items-center overflow-hidden rounded-[36px] border-2 border-solid border-[var(--baby-blue)] bg-white/90 px-6 py-10 shadow-sm lg:min-h-[70svh]">
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              backgroundImage: "url(/pregnancy-blood.jpg)",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          />
+          <div className="relative w-full">
+            <div className="mx-auto max-w-2xl rounded-[32px] bg-white/82 p-6 text-center shadow-sm backdrop-blur-sm sm:p-8">
+              <div className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--accent-strong)]">
+                  {hero.title}
+                </p>
+                <h1 className="font-display text-3xl text-slate-900 sm:text-4xl">
+                  {hero.headline}
+                </h1>
+                <p className="text-sm text-muted">{hero.intro}</p>
+              </div>
+
+              <div className="mt-6 flex flex-wrap justify-center gap-4">
+                <Link
+                  href="/booking?service=blood"
+                  className="inline-flex items-center justify-center rounded-full bg-[var(--accent-strong)] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[var(--ink-strong)]"
+                >
+                  {hero.primaryCta}
+                </Link>
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:text-slate-900"
+                >
+                  {hero.secondaryCta}
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4">
+      <section id="packages" className="mx-auto max-w-6xl px-4">
         <SectionHeading
-          eyebrow="Packages"
-          title="Blood Screening Packages"
-          description="Browse the blood screening options and packages by category."
+          eyebrow="Options"
+          title="Blood Screening Tests, Packages, and Checks"
+          description="Browse pregnancy screening, fertility packages, individual blood tests, and wellbeing checks by category."
         />
         <Tabs items={tabItems} />
+      </section>
+
+      {informationGroups.length ? (
+        <section className="mx-auto max-w-6xl px-4 py-16">
+          <SectionHeading
+            eyebrow="Information"
+            title="Additional Fertility Blood Test"
+            description="Reference information for the wider fertility blood tests and related screening checks."
+          />
+          <div className="mt-10 space-y-10">
+            {informationCallouts.length ? (
+              <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+                <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
+                  <div className="space-y-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--accent-strong)]">
+                      Additional tests
+                    </p>
+                    <h3 className="text-2xl font-semibold text-slate-900">
+                      {informationCallouts[0].callout.title}
+                    </h3>
+                    <div className="space-y-3">
+                      {informationCallouts[0].callout.description.map((line) => (
+                        <p key={line} className="text-sm leading-6 text-muted">
+                          {line}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="rounded-3xl bg-[var(--accent-soft)] p-6">
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--ink-strong)]">
+                      What to do next
+                    </p>
+                    {informationCallouts[0].callout.highlight ? (
+                      <p className="mt-3 text-lg font-semibold text-slate-900">
+                        {informationCallouts[0].callout.highlight}
+                      </p>
+                    ) : null}
+                    <p className="mt-3 text-sm text-slate-700">
+                      If you want to add extra fertility blood tests to your appointment, contact
+                      the clinic before attending so the correct tests can be arranged.
+                    </p>
+                    {informationCallouts[0].callout.ctaLabel &&
+                    informationCallouts[0].callout.ctaHref ? (
+                      <div className="pt-5">
+                        <a
+                          href={informationCallouts[0].callout.ctaHref}
+                          className="inline-flex items-center justify-center rounded-full border border-[var(--baby-blue)] bg-[var(--baby-blue)] px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:brightness-95"
+                        >
+                          {informationCallouts[0].callout.ctaLabel}
+                        </a>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+            {informationGroups.map((group) => (
+              <div key={group.id} className="space-y-4">
+                <BloodScreeningGroupPanel group={group} />
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      <section className="mx-auto max-w-6xl px-4 py-16">
+        <SectionHeading
+          eyebrow="Preparation"
+          title={preparation.title}
+          description={preparation.description}
+        />
+        <div className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <ul className="space-y-3 text-sm text-slate-700">
+            {preparation.steps.map((step) => (
+              <li key={step} className="flex gap-3">
+                <span className="mt-1 h-2 w-2 rounded-full bg-[var(--accent-strong)]" />
+                <span>{step}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 py-16">
+        <SectionHeading
+          eyebrow="FAQs"
+          title="Frequently Asked Questions"
+          description="Quick answers to the questions patients ask most often about blood screening."
+          align="center"
+        />
+        <div className="mt-10">
+          <Accordion items={faqItems} />
+        </div>
       </section>
     </div>
   );

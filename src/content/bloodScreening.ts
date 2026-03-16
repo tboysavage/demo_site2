@@ -1,11 +1,13 @@
 export type BloodScreeningCard = {
   id: string;
   title: string;
+  kind?: "package" | "info";
   subtitle?: string;
-  description?: string[];
+  description?: readonly string[];
   description2?: string;
-  bullets?: string[];
+  bullets?: readonly string[];
   price?: string;
+  relatedInfoIds?: readonly string[];
   ctaLabel?: string;
   ctaHref?: string;
 };
@@ -14,7 +16,25 @@ export type BloodScreeningGroup = {
   id: string;
   title: string;
   description?: string;
-  cards: BloodScreeningCard[];
+  callout?: {
+    title: string;
+    highlight?: string;
+    description: readonly string[];
+    ctaLabel?: string;
+    ctaHref?: string;
+  };
+  cards: readonly BloodScreeningCard[];
+};
+
+export type BloodScreeningPreparation = {
+  title: string;
+  description: string;
+  steps: readonly string[];
+};
+
+export type BloodScreeningFaq = {
+  question: string;
+  answer: string;
 };
 
 export const bloodScreeningContent = {
@@ -23,7 +43,7 @@ export const bloodScreeningContent = {
     headline: "Blood Screening",
     intro:
       "Explore blood screening options, fertility packages, and wellbeing checks with clear pricing and guidance.",
-    primaryCta: "Book a Scan",
+    primaryCta: "Book a Test",
     secondaryCta: "Contact Us",
   },
   groups: [
@@ -34,6 +54,7 @@ export const bloodScreeningContent = {
       cards: [
         {
           id: "gender-dna",
+          kind: "package",
           title: "Gender DNA Test (6-40 Wks.)",
           subtitle:
             "Sneak Peek DNA-based blood test to determine whether you’re having a boy or a girl",
@@ -50,6 +71,7 @@ export const bloodScreeningContent = {
         },
         {
           id: "chromosomal-test",
+          kind: "package",
           title: "Chromosomal Test (10-40 Wks.)",
           subtitle: "Blood test to check for chromosomal abnormalities",
           bullets: [
@@ -73,9 +95,21 @@ export const bloodScreeningContent = {
       title: "Fertility Blood Tests: Wellbeing Package",
       description:
         "Designed to help you get all the fertility related information you need.",
+      callout: {
+        title: "Additional Fertility Blood Tests",
+        highlight: "Choose your package from the following list:",
+        description: [
+          "If you would like additional fertility blood tests from the list below, each test will cost £25. You need to call the clinic to add extra blood tests to your appointment.",
+          "Scroll down to find out more information about the blood tests you can choose from.",
+          "When you book your appointment, you will be sent a form with your booking confirmation email. You need to complete this form with the specific blood tests you would like as part of your package before attending your appointment. All bloods need to be taken at the same appointment.",
+        ],
+        ctaLabel: "Contact Us",
+        ctaHref: "/contact",
+      },
       cards: [
         {
           id: "fertility-wellbeing-package",
+          kind: "package",
           title: "Fertility Blood Tests: Wellbeing Package",
           bullets: [
             "The blood tests you need for your individual fertility Wellbeing",
@@ -88,18 +122,6 @@ export const bloodScreeningContent = {
           ctaLabel: "Read More",
           ctaHref: "/contact",
         },
-        {
-          id: "additional-tests-note",
-          title: "Additional Fertility Blood Tests",
-          description: [
-            "If you would like additional fertility blood tests from the list below, each test will cost £25. You need to call the clinic to add extra blood tests to your appointment.",
-            "Scroll down to find out more information about the blood tests you can choose from.",
-            "When you book your appointment, you will be sent a form with your booking confirmation email. You need to complete this form with the specific blood tests you would like as part of your package before attending your appointment. All bloods need to be taken at the same appointment.",
-          ],
-          subtitle: "Choose your package from the following list:",
-          ctaLabel: "Read More",
-          ctaHref: "/contact",
-        },
       ],
     },
     {
@@ -109,8 +131,19 @@ export const bloodScreeningContent = {
       cards: [
         {
           id: "amh-package",
+          kind: "package",
           title: "AMH Package",
           subtitle: "For day 2 – 5 of your cycle",
+          relatedInfoIds: [
+            "amh-test",
+            "fbc-female",
+            "prolactin-female",
+            "t3-female",
+            "t4-female",
+            "tsh-female",
+            "vitamin-d-female",
+            "results-timing",
+          ],
           bullets: [
             "This AMH-led fertility blood test package is designed to help you get all the information you need during your fertility journey.",
             "This package is ideal for people undergoing fertility treatment privately, either in the UK or abroad.",
@@ -235,7 +268,20 @@ export const bloodScreeningContent = {
       cards: [
         {
           id: "testosterone-package",
+          kind: "package",
           title: "Male Fertility Blood Tests: Testosterone Package",
+          relatedInfoIds: [
+            "fbc-male",
+            "prolactin-male",
+            "t3-male",
+            "t4-male",
+            "tsh-male",
+            "vitamin-d-male",
+            "fsh",
+            "lh",
+            "testosterone",
+            "shbg",
+          ],
           description: [
             "Suitable For: Men aged 18+",
             "The Testosterone fertility blood test package is designed to help you get all the information you need for your fertility journey.",
@@ -564,58 +610,13 @@ export const bloodScreeningContent = {
       ],
     },
     {
-      id: "preparation",
-      title: "Preparing for your fertility blood test appointment",
-      description: "Practical steps to get ready for your visit.",
-      cards: [
-        {
-          id: "preparation-steps",
-          title: "Preparing for your fertility blood test appointment",
-          bullets: [
-            "Hydrate – Drink plenty of water in the 24 hours before your blood test. This will make the blood draw easier.",
-            "Make sure the blood draw area is easily accessible",
-            "Wear loose clothing that allows easy access to both arms and hands.",
-            "If you are on anticoagulant medication, take it after the appointment. If this is not possible, you can take it before your appointment, if it is absolutely essential.",
-            "Let our clinic team know if you are nervous about needles. They will make sure you’re calm and comfortable and do everything they can to make your blood draw quick and simple.",
-          ],
-        },
-      ],
-    },
-    {
-      id: "faqs",
-      title: "FAQs",
-      description: "Frequently asked questions about blood screening.",
-      cards: [
-        {
-          id: "faq-1",
-          title: "Will you analyse my blood results?",
-          description: [
-            "No, we will send you the results and recommend that you share these with your GP or fertility provider.",
-          ],
-        },
-        {
-          id: "faq-2",
-          title: "Should I have a bruise after my blood test?",
-          description: [
-            "It is not unusual for some bleeding to occur under the skin following your blood test and sometimes this can extend a little further around the puncture site. If this causes you concern, check with your practice nurse.",
-          ],
-        },
-        {
-          id: "faq-3",
-          title: "What if you can’t get a blood sample?",
-          description: [
-            "Sometimes we cannot get a blood sample from you. This can be for many reasons, such as not being hydrated enough, feeling cold or having another blood test recently. We will always offer you another appointment so we can try again.",
-          ],
-        },
-      ],
-    },
-    {
       id: "blood-pressure-diabetes",
       title: "Blood Pressure and Diabetics Checks",
       description: "For Men and Women",
       cards: [
         {
           id: "pregnancy-pegd",
+          kind: "package",
           title: "Meet&bond@ (20-40 weeks) Pre-eclampsia & Gestational Diabetes (PeGD)",
           subtitle: "Non-Invasive Pre-eclampsia And Gestational Diabetes Health Check",
           bullets: [
@@ -632,6 +633,7 @@ export const bloodScreeningContent = {
         },
         {
           id: "men-bp-diabetes",
+          kind: "package",
           title: "Blood Pressure and Diabetic Test For Men",
           subtitle: "The following will be done:",
           bullets: [
@@ -649,6 +651,34 @@ export const bloodScreeningContent = {
       ],
     },
   ],
+  preparation: {
+    title: "Preparing for your fertility blood test appointment",
+    description: "Practical steps to get ready for your visit.",
+    steps: [
+      "Hydrate - Drink plenty of water in the 24 hours before your blood test. This will make the blood draw easier.",
+      "Make sure the blood draw area is easily accessible.",
+      "Wear loose clothing that allows easy access to both arms and hands.",
+      "If you are on anticoagulant medication, take it after the appointment. If this is not possible, you can take it before your appointment if it is absolutely essential.",
+      "Let our clinic team know if you are nervous about needles. They will make sure you're calm and comfortable and do everything they can to make your blood draw quick and simple.",
+    ],
+  } satisfies BloodScreeningPreparation,
+  faqs: [
+    {
+      question: "Will you analyse my blood results?",
+      answer:
+        "No, we will send you the results and recommend that you share these with your GP or fertility provider.",
+    },
+    {
+      question: "Should I have a bruise after my blood test?",
+      answer:
+        "It is not unusual for some bleeding to occur under the skin following your blood test and sometimes this can extend a little further around the puncture site. If this causes you concern, check with your practice nurse.",
+    },
+    {
+      question: "What if you can't get a blood sample?",
+      answer:
+        "Sometimes we cannot get a blood sample from you. This can be for many reasons, such as not being hydrated enough, feeling cold or having another blood test recently. We will always offer you another appointment so we can try again.",
+    },
+  ] satisfies BloodScreeningFaq[],
 } as const;
 
 export type BloodScreeningContent = typeof bloodScreeningContent;

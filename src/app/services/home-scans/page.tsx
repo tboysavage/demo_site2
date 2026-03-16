@@ -6,37 +6,30 @@ import PackageGroupPanel from "@/components/PackageGroupPanel";
 import SectionHeading from "@/components/SectionHeading";
 import Accordion from "@/components/Accordion";
 import { clinicUltrasoundScansContent } from "@/content/clinicUltrasoundScans";
+import { homeScansContent } from "@/content/homeScans";
 
-const {
-  hero,
-  compare,
-  groups,
-  whatToExpect,
-  trust,
-  faqs,
-  brand,
-  site,
-  ui,
-  seo,
-  images,
-} = clinicUltrasoundScansContent;
+const { brand, site, seo, ui, images } = clinicUltrasoundScansContent;
+const { hero, intro, compare, groups, whatToExpect, trust, faqs, faqSection, packagesSection } =
+  homeScansContent;
 
 export const metadata: Metadata = {
   title: hero.title,
-  description: seo.clinicDescription,
+  description:
+    "Home-based pregnancy scans at Baby Sonovue LTD. Explore reassurance, wellbeing, growth, gender, 3D/4D, second opinion, and anatomy review options.",
   alternates: {
-    canonical: `${site.canonicalBaseUrl}/services/clinic-ultrasound-scans`,
+    canonical: `${site.canonicalBaseUrl}/services/home-scans`,
   },
   openGraph: {
     title: `${hero.title} | ${brand.name}`,
-    description: seo.clinicOgDescription,
-    url: `${site.canonicalBaseUrl}/services/clinic-ultrasound-scans`,
-        images: [
+    description:
+      "Explore home-based scan options for reassurance, growth, gender discovery, 3D/4D bonding, second opinion support, and anatomy review.",
+    url: `${site.canonicalBaseUrl}/services/home-scans`,
+    images: [
       {
-        url: "/hero.jpg",
+        url: "/clinic-3.jpg",
         width: 1200,
         height: 630,
-        alt: images.ogAlt,
+        alt: "Home-based pregnancy scan support",
       },
     ],
   },
@@ -45,17 +38,17 @@ export const metadata: Metadata = {
 const tabItems: TabItem[] = groups.map((group) => ({
   id: group.id,
   label: group.title,
-  description: `${group.weeks}`,
+  description: group.weeks,
   content: <PackageGroupPanel group={group} />,
 }));
 
 const faqItems = faqs.map((faq, index) => ({
-  id: `faq-${index}`,
+  id: `home-scan-faq-${index}`,
   title: faq.question,
   content: <p>{faq.answer}</p>,
 }));
 
-export default function ClinicUltrasoundScansPage() {
+export default function HomeScansPage() {
   const schema = {
     "@context": "https://schema.org",
     "@type": "MedicalClinic",
@@ -69,7 +62,7 @@ export default function ClinicUltrasoundScansPage() {
     },
     telephone: brand.phone,
     email: brand.email,
-    url: `${site.canonicalBaseUrl}/services/clinic-ultrasound-scans`,
+    url: `${site.canonicalBaseUrl}/services/home-scans`,
     priceRange: seo.priceRange,
     areaServed: seo.areaServed,
   };
@@ -77,13 +70,13 @@ export default function ClinicUltrasoundScansPage() {
   const serviceSchema = {
     "@context": "https://schema.org",
     "@type": "Service",
-    name: "Clinic Ultrasound Scans",
+    name: "Home-Based Pregnancy Scans",
     provider: {
       "@type": "MedicalClinic",
       name: brand.name,
     },
     areaServed: seo.areaServed,
-    serviceType: seo.serviceType,
+    serviceType: "Home-based pregnancy ultrasound scans",
   };
 
   return (
@@ -100,18 +93,34 @@ export default function ClinicUltrasoundScansPage() {
           <div
             className="pointer-events-none absolute inset-0"
             style={{
-              backgroundImage: "url(/welcome.png)",
+              backgroundImage: "url(/pexels-shkrabaanthony-5215001.jpg)",
               backgroundSize: "cover",
               backgroundPosition: "center",
             }}
           />
           <div className="relative grid w-full gap-8 lg:grid-cols-[1fr_1fr] lg:items-center">
             <div className="rounded-[32px] bg-white/82 p-6 shadow-sm backdrop-blur-sm">
-              <SectionHeading
-                eyebrow={compare.eyebrow}
-                title={compare.title}
-                description={compare.subtitle}
-              />
+              <div className="space-y-4">
+                <SectionHeading
+                  eyebrow={ui.labels.service}
+                  title={hero.headline}
+                  description={hero.intro}
+                />
+                <div className="flex flex-wrap gap-4">
+                  <Link
+                    href="/booking?service=home"
+                    className="rounded-full bg-[var(--accent-strong)] px-6 py-3 text-sm font-semibold text-white"
+                  >
+                    Enquire about home scans
+                  </Link>
+                  <Link
+                    href="/services/clinic-ultrasound-scans"
+                    className="rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700"
+                  >
+                    View clinic scan page
+                  </Link>
+                </div>
+              </div>
             </div>
             <div className="mt-6 grid gap-4 rounded-3xl border border-slate-200 bg-white p-6 sm:grid-cols-2">
               {compare.items.map((item) => (
@@ -129,11 +138,49 @@ export default function ClinicUltrasoundScansPage() {
         </div>
       </section>
 
+      <section className="mx-auto max-w-6xl px-4 py-16">
+        <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+          <div className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--accent-strong)]">
+              Guidance
+            </p>
+            <h2 className="mt-3 font-display text-3xl text-slate-900 sm:text-4xl">
+              {intro.title}
+            </h2>
+            <ul className="mt-6 space-y-3 text-sm text-slate-600">
+              {intro.bullets.map((item) => (
+                <li key={item} className="flex gap-2">
+                  <span className="mt-1 h-2 w-2 rounded-full bg-[var(--accent-strong)]" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-6 text-sm text-muted">{intro.closing}</p>
+          </div>
+          <div className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--accent-strong)]">
+              Trust
+            </p>
+            <h2 className="mt-3 font-display text-3xl text-slate-900 sm:text-4xl">
+              {intro.whyChooseTitle}
+            </h2>
+            <ul className="mt-6 space-y-3 text-sm text-slate-600">
+              {intro.whyChooseBullets.map((item) => (
+                <li key={item} className="flex gap-2">
+                  <span className="mt-1 h-2 w-2 rounded-full bg-[var(--accent-strong)]" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
       <section id="packages" className="mx-auto max-w-6xl px-4 py-16">
         <SectionHeading
           eyebrow={ui.labels.packages}
-          title={ui.packagesSection.title}
-          description={ui.packagesSection.description}
+          title={packagesSection.title}
+          description={packagesSection.description}
         />
         <Tabs items={tabItems} />
       </section>
@@ -142,7 +189,7 @@ export default function ClinicUltrasoundScansPage() {
         <SectionHeading
           eyebrow={ui.labels.experience}
           title={whatToExpect.title}
-          description={ui.experienceSection.description}
+          description="Home-based scanning keeps the same focus on clarity and reassurance, with the added convenience of being seen where you feel most comfortable."
         />
         <div className="mt-10 grid gap-6 md:grid-cols-2">
           {whatToExpect.steps.map((step, index) => (
@@ -153,9 +200,7 @@ export default function ClinicUltrasoundScansPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--accent-strong)]">
                 {ui.labels.step} {index + 1}
               </p>
-              <h3 className="mt-2 text-lg font-semibold text-slate-900">
-                {step.title}
-              </h3>
+              <h3 className="mt-2 text-lg font-semibold text-slate-900">{step.title}</h3>
               <p className="mt-2 text-sm text-muted">{step.description}</p>
             </div>
           ))}
@@ -168,27 +213,38 @@ export default function ClinicUltrasoundScansPage() {
             <SectionHeading
               eyebrow={ui.labels.trust}
               title={trust.title}
-              description={ui.trustSection.description}
+              description="A home-based appointment changes the setting, not the standard of care."
             />
             <div className="space-y-4">
               {trust.items.map((item) => (
                 <div key={item.title} className="rounded-3xl bg-white p-5">
-                  <h3 className="text-lg font-semibold text-slate-900">
-                    {item.title}
-                  </h3>
+                  <h3 className="text-lg font-semibold text-slate-900">{item.title}</h3>
                   <p className="mt-2 text-sm text-muted">{item.description}</p>
                 </div>
               ))}
+            </div>
+            <div className="rounded-3xl border border-slate-200 bg-[var(--accent-soft)] p-5 text-sm text-slate-700">
+              <p className="font-semibold text-slate-900">Need to decide between home and clinic?</p>
+              <p className="mt-2">
+                Second opinion scans can be arranged either at home or in clinic,
+                depending on what works best for you.
+              </p>
+              <Link
+                href="/booking?service=home"
+                className="mt-4 inline-flex rounded-full bg-[var(--accent-strong)] px-5 py-3 text-sm font-semibold text-white"
+              >
+                Contact the team
+              </Link>
             </div>
           </div>
           <div className="overflow-hidden rounded-[32px] border-2 border-solid border-[var(--baby-blue)] bg-white shadow-lg">
             <div className="relative aspect-[16/10] w-full rounded-[32px] bg-white">
               <Image
-                src="/clinic-2.jpg"
+                src="/clinic-3.jpg"
                 alt={images.comfortAlt}
                 fill
                 sizes="(min-width: 1024px) 46vw, 100vw"
-                className="rounded-[32px] object-cover"
+                className="object-cover"
               />
             </div>
           </div>
@@ -198,8 +254,8 @@ export default function ClinicUltrasoundScansPage() {
       <section className="mx-auto max-w-6xl px-4 py-16">
         <SectionHeading
           eyebrow={ui.labels.faqs}
-          title={ui.faqSection.title}
-          description={ui.faqSection.description}
+          title={faqSection.title}
+          description={faqSection.description}
           align="center"
         />
         <div className="mt-10">

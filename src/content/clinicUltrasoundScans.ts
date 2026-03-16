@@ -20,7 +20,7 @@ export type PackageGroup = {
   title: string;
   description: string;
   weeks: string;
-  packages: Package[];
+  packages: readonly Package[];
 };
 
 export const clinicUltrasoundScansContent = {
@@ -67,7 +67,8 @@ export const clinicUltrasoundScansContent = {
   navigation: {
     menu: [
       { label: "Home", href: "/" },
-      { label: "Book a Scan", href: "/services/clinic-ultrasound-scans#booking" },
+      { label: "Book a Scan", href: "/services/clinic-ultrasound-scans" },
+      { label: "Home Scans", href: "/services/home-scans" },
       { label: "Blood Screening", href: "/blood-screening" },
       { label: "Gallery", href: "#" },
       { label: "Contact Us", href: "/contact" },
@@ -107,7 +108,7 @@ export const clinicUltrasoundScansContent = {
     },
     home: {
       eyebrow: "Private Clinic Ultrasound Scans",
-      servicesTitle: "Clinic Ultrasound Scans",
+      servicesTitle: "What we do",
       servicesDescription: "Explore scan options by gestational range and focus area.",
       welcomeTitle: "Welcome to baby Sonovue Salisbury",
       welcomeBody:
@@ -185,22 +186,27 @@ export const clinicUltrasoundScansContent = {
       {
         label: "2D wellbeing scans",
         detail: "7–16 weeks · £109",
+        href: "/services/clinic-ultrasound-scans?package=2d-wellbeing#packages",
       },
       {
         label: "Observation & growth",
         detail: "16–40 weeks · £109–£119",
+        href: "/services/clinic-ultrasound-scans?package=observation-growth#packages",
       },
       {
         label: "Gender & 4D options",
         detail: "16–32 weeks · £109–£140",
+        href: "/services/clinic-ultrasound-scans?package=gender#packages",
       },
       {
         label: "Second opinion support",
         detail: "7–40 weeks · £99",
+        href: "/services/clinic-ultrasound-scans?package=second-opinion#packages",
       },
       {
         label: "Wellbeing + anatomy",
         detail: "18–24 weeks · £139–£169",
+        href: "/services/clinic-ultrasound-scans?package=anatomy#packages",
       },
     ],
   },
@@ -549,7 +555,7 @@ export const clinicUltrasoundScansContent = {
     ctaLabel: "Submit booking request",
   },
   contactPage: {
-    title: "Contact & Booking",
+    title: "Contact Us",
     subtitle: "Share your details and we will get back to you as soon as possible.",
   },
 } as const;

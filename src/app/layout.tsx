@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
 import "./globals.css";
-import SiteHeader from "@/components/SiteHeader";
-import SiteFooter from "@/components/SiteFooter";
+import LayoutShell from "@/components/LayoutShell";
 import { clinicUltrasoundScansContent } from "@/content/clinicUltrasoundScans";
 
 const manrope = Manrope({
@@ -37,9 +36,7 @@ export default function RootLayout({
       <body
         className={`${manrope.variable} ${cormorant.variable} antialiased`}
       >
-        <SiteHeader />
-        <main className="min-h-screen">{children}</main>
-        <SiteFooter />
+        <LayoutShell>{children}</LayoutShell>
       </body>
     </html>
   );

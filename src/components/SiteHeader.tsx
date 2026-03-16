@@ -1,9 +1,12 @@
+"use client";
+
 import type React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { clinicUltrasoundScansContent } from "@/content/clinicUltrasoundScans";
 
-const { brand, navigation, hero } = clinicUltrasoundScansContent;
+const { brand, navigation } = clinicUltrasoundScansContent;
 
 const socialIcons: Record<string, React.ReactElement> = {
   Facebook: (
@@ -41,6 +44,22 @@ const socialIcons: Record<string, React.ReactElement> = {
 };
 
 export default function SiteHeader() {
+  const pathname = usePathname();
+
+  function isActiveNavItem(href: string) {
+    const baseHref = href.split("#")[0];
+
+    if (!baseHref || baseHref === "#") {
+      return false;
+    }
+
+    if (baseHref === "/") {
+      return pathname === "/";
+    }
+
+    return pathname === baseHref || pathname.startsWith(`${baseHref}/`);
+  }
+
   return (
     <header className="relative z-30">
       <div className="bg-[var(--ink-strong)] text-white">
@@ -52,6 +71,12 @@ export default function SiteHeader() {
               className="font-semibold tracking-wide"
             >
               {brand.phone}
+            </a>
+            <a
+              href={`mailto:${brand.email}`}
+              className="font-semibold tracking-wide text-white/90 transition hover:text-white"
+            >
+              {brand.email}
             </a>
           </div>
           <div className="flex items-center gap-3">
@@ -68,9 +93,12 @@ export default function SiteHeader() {
           </div>
         </div>
       </div>
-      <div className="bg-white/80 backdrop-blur">
+      <div className="bg-[#c7e7fb]/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-          <Link href="/" className="flex items-center gap-4">
+          <Link
+            href="/"
+            className="flex items-center gap-4 rounded-2xl border-2 border-solid border-[var(--accent-strong)] bg-white/92 px-3 py-2 shadow-sm"
+          >
             <Image
               src="/logo.png"
               alt="Baby Sonovue LTD"
@@ -81,23 +109,22 @@ export default function SiteHeader() {
             />
           </Link>
           <div className="hidden items-center gap-6 lg:flex">
-            <a
-              href={`mailto:${brand.email}`}
-              className="text-sm font-semibold text-slate-600"
-            >
-              {brand.email}
-            </a>
             {navigation.menu.map((item) => (
               <Link
                 key={item.label}
                 href={item.href}
-                className="text-sm font-semibold text-slate-700 transition hover:text-slate-900"
+                aria-current={isActiveNavItem(item.href) ? "page" : undefined}
+                className={`rounded-full px-3 py-2 text-sm font-semibold transition ${
+                  isActiveNavItem(item.href)
+                    ? "bg-white text-[var(--accent-strong)] shadow-sm ring-1 ring-slate-200/80"
+                    : "text-slate-700 hover:text-slate-900"
+                }`}
               >
                 {item.label}
               </Link>
             ))}
             <a
-              href="/services/clinic-ultrasound-scans#booking"
+              href="/booking"
               className="rounded-full bg-[var(--accent-strong)] px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--ink-strong)]"
             >
               {navigation.bookButtonLabel}
@@ -107,7 +134,16 @@ export default function SiteHeader() {
         <div className="lg:hidden">
           <nav className="mx-auto flex max-w-6xl items-center justify-between gap-4 border-t border-slate-200 px-4 py-3 text-xs font-semibold text-slate-600">
             {navigation.menu.map((item) => (
-              <Link key={item.label} href={item.href} className="text-center">
+              <Link
+                key={item.label}
+                href={item.href}
+                aria-current={isActiveNavItem(item.href) ? "page" : undefined}
+                className={`rounded-full px-3 py-2 text-center transition ${
+                  isActiveNavItem(item.href)
+                    ? "bg-white text-[var(--accent-strong)] shadow-sm ring-1 ring-slate-200/80"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
                 {item.label}
               </Link>
             ))}

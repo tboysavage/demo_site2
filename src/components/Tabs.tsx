@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Accordion, { AccordionItem } from "@/components/Accordion";
 
 export type TabItem = {
@@ -14,35 +15,54 @@ type TabsProps = {
   items: TabItem[];
 };
 
+function resolveActiveId(
+  items: TabItem[],
+  packageParam?: string,
+  hash?: string
+) {
+  const packageMatch = items.find((item) => item.id === packageParam);
+
+  if (packageMatch) {
+    return packageMatch.id;
+  }
+
+  const hashMatch = items.find((item) => item.id === hash);
+  return hashMatch?.id ?? items[0]?.id ?? "";
+}
+
 export default function Tabs({ items }: TabsProps) {
+  const searchParams = useSearchParams();
+  const packageParam = searchParams.get("package") ?? "";
+
   const [activeId, setActiveId] = useState(() => {
     if (typeof window === "undefined") {
       return items[0]?.id ?? "";
     }
     const hash = window.location.hash.replace("#", "");
-    const match = items.find((item) => item.id === hash);
-    return match?.id ?? items[0]?.id ?? "";
+    const currentPackage = new URLSearchParams(window.location.search).get("package") ?? "";
+    return resolveActiveId(items, currentPackage, hash);
   });
 
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace("#", "");
-      const match = items.find((item) => item.id === hash);
-      if (match) {
-        setActiveId(match.id);
-      }
+      const nextId = resolveActiveId(items, packageParam, hash);
+      setActiveId(nextId);
     };
 
+    handleHashChange();
     window.addEventListener("hashchange", handleHashChange);
     return () => window.removeEventListener("hashchange", handleHashChange);
-  }, [items]);
+  }, [items, packageParam]);
 
-  useEffect(() => {
-    if (!activeId) return;
+  function activateTab(nextId: string) {
+    setActiveId(nextId);
+
     const url = new URL(window.location.href);
-    url.hash = activeId;
+    url.searchParams.delete("package");
+    url.hash = nextId;
     window.history.replaceState(null, "", url.toString());
-  }, [activeId]);
+  }
 
   const activeItem = items.find((item) => item.id === activeId) ?? items[0];
 
@@ -69,7 +89,7 @@ export default function Tabs({ items }: TabsProps) {
               role="tab"
               aria-selected={activeId === item.id}
               tabIndex={activeId === item.id ? 0 : -1}
-              onClick={() => setActiveId(item.id)}
+              onClick={() => activateTab(item.id)}
               className={`w-full rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${
                 activeId === item.id
                   ? "border-[var(--accent-strong)] bg-[var(--accent-soft)] text-[var(--ink-strong)]"
@@ -95,7 +115,7 @@ export default function Tabs({ items }: TabsProps) {
         </div>
       </div>
       <div className="lg:hidden">
-        <Accordion items={accordionItems} defaultOpenId={activeId} />
+        <Accordion key={activeId} items={accordionItems} defaultOpenId={activeId} />
       </div>
     </div>
   );

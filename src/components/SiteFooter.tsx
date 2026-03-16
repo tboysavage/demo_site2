@@ -47,7 +47,7 @@ export default function SiteFooter() {
           </p>
           <p className="mt-2 text-xl font-semibold">{ui.footer.message}</p>
           <a
-            href="/services/clinic-ultrasound-scans#booking"
+            href="/booking"
             className="mt-4 inline-flex rounded-full bg-white px-4 py-2 text-sm font-semibold text-[var(--ink-strong)]"
           >
             {ui.footer.cta}

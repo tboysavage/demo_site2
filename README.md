@@ -33,14 +33,76 @@ All copy, pricing, packages, and brand details live in:
 
 Update this file to edit the hero text, packages, FAQs, contact info, or canonical base URL.
 
-## Contact form
+## Booking and payments
 
-The booking/contact form submits to:
+The scan booking flow now uses:
+
+- `POST /api/bookings` — creates a persisted booking record
+- `POST /api/stripe/webhook` — updates payment state from Stripe events
+- `data/bookings.sqlite` — local SQLite database file
+
+Environment variables:
+
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `BOOKING_DEPOSIT_AMOUNT_PENCE` (defaults to `2500`)
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_SECURE`
+- `SMTP_USER`
+- `SMTP_PASS`
+- `SMTP_FROM`
+- `BOOKING_NOTIFICATION_EMAIL` (defaults to the brand email in content)
+- `ADMIN_USERNAME`
+- `ADMIN_PASSWORD`
+- `ADMIN_SESSION_SECRET`
+
+Copy `.env.example` to `.env.local` before testing Stripe locally.
+
+The general contact form still submits to:
 
 - `POST /api/contact`
 
-The API route logs the submission to the console and returns `{ ok: true }`.
+## Admin portal
+
+The app now includes an internal admin portal at:
+
+- `/admin`
+
+Features:
+
+- patient contact messages stored in SQLite
+- booking and deposit status view
+- appointment calendar by month
+- upcoming appointments list with a patient detail panel
+- all-appointments history for the doctor
+
+## Booking email notifications
+
+When Stripe confirms a paid booking, the app now sends a notification email with the patient and
+appointment details.
+
+This uses SMTP. Configure:
+
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_SECURE`
+- `SMTP_USER`
+- `SMTP_PASS`
+- `SMTP_FROM`
+- `BOOKING_NOTIFICATION_EMAIL`
+
+The notification is sent after a successful paid booking event, not when a draft booking request is
+first created.
+
+Admin access uses env-based credentials and an HTTP-only session cookie. Set:
+
+- `ADMIN_USERNAME`
+- `ADMIN_PASSWORD`
+- `ADMIN_SESSION_SECRET`
+
+before using `/admin/login`.
 
 ## Deployment
 
-Deploy on any Node.js-compatible platform (Vercel recommended). Set your canonical base URL in `src/content/clinicUltrasoundScans.ts` before going live.
+Deploy on a Node.js platform that supports `node:sqlite` and persistent disk storage, or replace the SQLite layer with a hosted database before going live. Set your canonical base URL in `src/content/clinicUltrasoundScans.ts` before going live.
