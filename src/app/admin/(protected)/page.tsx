@@ -66,24 +66,24 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
   const monthEnd = new Date(displayMonth.getFullYear(), displayMonth.getMonth() + 1, 0);
   const today = new Date().toISOString().slice(0, 10);
 
-  const metrics = getAdminMetrics();
-  const monthBookings = listAdminBookings({
+  const metrics = await getAdminMetrics();
+  const monthBookings = await listAdminBookings({
     limit: 500,
     fromDate: toDateOnly(monthStart),
     toDate: toDateOnly(monthEnd),
     sortDirection: "asc",
   });
-  const upcomingBookings = listAdminBookings({
+  const upcomingBookings = await listAdminBookings({
     limit: 40,
     fromDate: today,
     sortDirection: "asc",
   });
-  const allAppointments = listAdminBookings({
+  const allAppointments = await listAdminBookings({
     limit: 500,
     sortDirection: "desc",
   });
-  const contactMessages = listContactMessages(100);
-  const paymentSettings = getPaymentSettings();
+  const contactMessages = await listContactMessages(100);
+  const paymentSettings = await getPaymentSettings();
   const settingsNotice = getSettingsNotice(settings);
 
   return (

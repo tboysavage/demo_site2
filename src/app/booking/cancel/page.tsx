@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export default async function BookingCancelPage({ searchParams }: PageProps) {
   const { reference } = await searchParams;
-  const booking = reference ? getBookingByReference(reference) : null;
+  const booking = reference ? await getBookingByReference(reference) : null;
 
   return (
     <div className="pb-24">

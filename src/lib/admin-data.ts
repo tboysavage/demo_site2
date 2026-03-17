@@ -135,7 +135,7 @@ function nowIso() {
 
 function mapContactMessage(row: ContactMessageRow): ContactMessageRecord {
   return {
-    id: row.id,
+    id: Number(row.id),
     name: row.name,
     email: row.email,
     phone: row.phone,
@@ -149,7 +149,7 @@ function mapContactMessage(row: ContactMessageRow): ContactMessageRecord {
 
 function mapAdminBooking(row: AdminBookingRow): AdminBookingRecord {
   return {
-    id: row.id,
+    id: Number(row.id),
     reference: row.reference,
     service: row.service,
     packageId: row.package_id,
@@ -162,10 +162,10 @@ function mapAdminBooking(row: AdminBookingRow): AdminBookingRecord {
     pregnancyMultiple: row.pregnancy_multiple,
     dueDate: row.due_date,
     cycleDate: row.cycle_date,
-    manualWeeksDue: row.manual_weeks_due,
-    manualDaysDue: row.manual_days_due,
-    gestationWeeks: row.gestation_weeks,
-    gestationDays: row.gestation_days,
+    manualWeeksDue: row.manual_weeks_due === null ? null : Number(row.manual_weeks_due),
+    manualDaysDue: row.manual_days_due === null ? null : Number(row.manual_days_due),
+    gestationWeeks: Number(row.gestation_weeks),
+    gestationDays: Number(row.gestation_days),
     locationId: row.location_id,
     locationLabel: row.location_label,
     appointmentDate: row.appointment_date,
@@ -181,57 +181,55 @@ function mapAdminBooking(row: AdminBookingRow): AdminBookingRecord {
     customerNotes: row.customer_notes,
     bookingStatus: row.booking_status,
     paymentStatus: row.payment_status,
-    depositAmountPence: row.deposit_amount_pence,
+    depositAmountPence: Number(row.deposit_amount_pence),
     depositCurrency: row.deposit_currency,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 }
 
-export function createContactMessage(input: CreateContactMessageInput) {
-  const database = getDatabase();
+export async function createContactMessage(input: CreateContactMessageInput) {
+  const sql = await getDatabase();
   const createdAt = nowIso();
-  database
-    .prepare(
-      `INSERT INTO contact_messages (
-        name,
-        email,
-        phone,
-        preferred_date,
-        message,
-        status,
-        raw_payload,
-        created_at,
-        updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+
+  await sql`
+    INSERT INTO contact_messages (
+      name,
+      email,
+      phone,
+      preferred_date,
+      message,
+      status,
+      raw_payload,
+      created_at,
+      updated_at
+    ) VALUES (
+      ${input.name},
+      ${input.email},
+      ${input.phone},
+      ${input.preferredDate},
+      ${input.message?.trim() || null},
+      ${"new"},
+      ${JSON.stringify(input)},
+      ${createdAt},
+      ${createdAt}
     )
-    .run(
-      input.name,
-      input.email,
-      input.phone,
-      input.preferredDate,
-      input.message?.trim() || null,
-      "new",
-      JSON.stringify(input),
-      createdAt,
-      createdAt,
-    );
+  `;
 }
 
-export function listContactMessages(limit = 100) {
-  const rows = getDatabase()
-    .prepare(
-      `SELECT id, name, email, phone, preferred_date, message, status, created_at, updated_at
-       FROM contact_messages
-       ORDER BY created_at DESC
-       LIMIT ?`
-    )
-    .all(limit) as ContactMessageRow[];
+export async function listContactMessages(limit = 100) {
+  const sql = await getDatabase();
+  const rows = await sql<ContactMessageRow[]>`
+    SELECT id, name, email, phone, preferred_date, message, status, created_at, updated_at
+    FROM contact_messages
+    ORDER BY created_at DESC
+    LIMIT ${limit}
+  `;
 
   return rows.map(mapContactMessage);
 }
 
-export function listAdminBookings(options?: {
+export async function listAdminBookings(options?: {
   limit?: number;
   fromDate?: string;
   toDate?: string;
@@ -239,144 +237,145 @@ export function listAdminBookings(options?: {
 }) {
   const { limit = 100, fromDate, toDate, sortDirection = "asc" } = options ?? {};
   const clauses: string[] = [];
-  const params: unknown[] = [];
+  const params: (string | number)[] = [];
 
   if (fromDate) {
-    clauses.push("appointment_date >= ?");
+    clauses.push(`appointment_date >= $${params.length + 1}`);
     params.push(fromDate);
   }
 
   if (toDate) {
-    clauses.push("appointment_date <= ?");
+    clauses.push(`appointment_date <= $${params.length + 1}`);
     params.push(toDate);
   }
 
   const whereClause = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
   const orderDirection = sortDirection === "desc" ? "DESC" : "ASC";
-  const rows = getDatabase()
-    .prepare(
-      `SELECT
-        id,
-        reference,
-        service,
-        package_id,
-        package_title,
-        package_group_id,
-        package_group_title,
-        package_weeks,
-        package_price_label,
-        pregnancy_mode,
-        pregnancy_multiple,
-        due_date,
-        cycle_date,
-        manual_weeks_due,
-        manual_days_due,
-        gestation_weeks,
-        gestation_days,
-        location_id,
-        location_label,
-        appointment_date,
-        appointment_time,
-        customer_first_name,
-        customer_last_name,
-        customer_email,
-        customer_phone,
-        customer_address_line1,
-        customer_town_or_city,
-        customer_postcode,
-        customer_date_of_birth,
-        customer_notes,
-        booking_status,
-        payment_status,
-        deposit_amount_pence,
-        deposit_currency,
-        created_at,
-        updated_at
-       FROM bookings
-       ${whereClause}
-       ORDER BY appointment_date ${orderDirection}, appointment_time ${orderDirection}, created_at DESC
-       LIMIT ?`
-    )
-    .all(...params, limit) as AdminBookingRow[];
+  const sql = await getDatabase();
+
+  const rows = await sql.unsafe<AdminBookingRow[]>(
+    `SELECT
+      id,
+      reference,
+      service,
+      package_id,
+      package_title,
+      package_group_id,
+      package_group_title,
+      package_weeks,
+      package_price_label,
+      pregnancy_mode,
+      pregnancy_multiple,
+      due_date,
+      cycle_date,
+      manual_weeks_due,
+      manual_days_due,
+      gestation_weeks,
+      gestation_days,
+      location_id,
+      location_label,
+      appointment_date,
+      appointment_time,
+      customer_first_name,
+      customer_last_name,
+      customer_email,
+      customer_phone,
+      customer_address_line1,
+      customer_town_or_city,
+      customer_postcode,
+      customer_date_of_birth,
+      customer_notes,
+      booking_status,
+      payment_status,
+      deposit_amount_pence,
+      deposit_currency,
+      created_at,
+      updated_at
+    FROM bookings
+    ${whereClause}
+    ORDER BY appointment_date ${orderDirection}, appointment_time ${orderDirection}, created_at DESC
+    LIMIT $${params.length + 1}`,
+    [...params, limit],
+  );
 
   return rows.map(mapAdminBooking);
 }
 
-export function getAdminBookingByReference(reference: string) {
-  const row = getDatabase()
-    .prepare(
-      `SELECT
-        id,
-        reference,
-        service,
-        package_id,
-        package_title,
-        package_group_id,
-        package_group_title,
-        package_weeks,
-        package_price_label,
-        pregnancy_mode,
-        pregnancy_multiple,
-        due_date,
-        cycle_date,
-        manual_weeks_due,
-        manual_days_due,
-        gestation_weeks,
-        gestation_days,
-        location_id,
-        location_label,
-        appointment_date,
-        appointment_time,
-        customer_first_name,
-        customer_last_name,
-        customer_email,
-        customer_phone,
-        customer_address_line1,
-        customer_town_or_city,
-        customer_postcode,
-        customer_date_of_birth,
-        customer_notes,
-        booking_status,
-        payment_status,
-        deposit_amount_pence,
-        deposit_currency,
-        created_at,
-        updated_at
-       FROM bookings
-       WHERE reference = ?`
-    )
-    .get(reference) as AdminBookingRow | undefined;
+export async function getAdminBookingByReference(reference: string) {
+  const sql = await getDatabase();
+  const rows = await sql<AdminBookingRow[]>`
+    SELECT
+      id,
+      reference,
+      service,
+      package_id,
+      package_title,
+      package_group_id,
+      package_group_title,
+      package_weeks,
+      package_price_label,
+      pregnancy_mode,
+      pregnancy_multiple,
+      due_date,
+      cycle_date,
+      manual_weeks_due,
+      manual_days_due,
+      gestation_weeks,
+      gestation_days,
+      location_id,
+      location_label,
+      appointment_date,
+      appointment_time,
+      customer_first_name,
+      customer_last_name,
+      customer_email,
+      customer_phone,
+      customer_address_line1,
+      customer_town_or_city,
+      customer_postcode,
+      customer_date_of_birth,
+      customer_notes,
+      booking_status,
+      payment_status,
+      deposit_amount_pence,
+      deposit_currency,
+      created_at,
+      updated_at
+    FROM bookings
+    WHERE reference = ${reference}
+    LIMIT 1
+  `;
 
-  return row ? mapAdminBooking(row) : null;
+  return rows[0] ? mapAdminBooking(rows[0]) : null;
 }
 
-export function getAdminMetrics() {
+export async function getAdminMetrics() {
   const today = new Date().toISOString().slice(0, 10);
-  const row = getDatabase()
-    .prepare(
-      `SELECT
-        (SELECT COUNT(*) FROM bookings) AS total_bookings,
-        (SELECT COUNT(*) FROM bookings WHERE appointment_date >= ?) AS upcoming_appointments,
-        (SELECT COUNT(*) FROM bookings WHERE appointment_date = ?) AS today_appointments,
-        (SELECT COUNT(*) FROM bookings WHERE payment_status = 'paid') AS paid_deposits,
-        (SELECT COUNT(*) FROM contact_messages) AS total_messages,
-        (SELECT COUNT(*) FROM contact_messages WHERE status = 'new') AS new_messages`
-    )
-    .get(today, today) as {
+  const sql = await getDatabase();
+  const rows = await sql<{
     total_bookings: number;
     upcoming_appointments: number;
     today_appointments: number;
     paid_deposits: number;
     total_messages: number;
     new_messages: number;
-  };
+  }[]>`
+    SELECT
+      (SELECT COUNT(*)::int FROM bookings) AS total_bookings,
+      (SELECT COUNT(*)::int FROM bookings WHERE appointment_date >= ${today}) AS upcoming_appointments,
+      (SELECT COUNT(*)::int FROM bookings WHERE appointment_date = ${today}) AS today_appointments,
+      (SELECT COUNT(*)::int FROM bookings WHERE payment_status = 'paid') AS paid_deposits,
+      (SELECT COUNT(*)::int FROM contact_messages) AS total_messages,
+      (SELECT COUNT(*)::int FROM contact_messages WHERE status = 'new') AS new_messages
+  `;
 
+  const row = rows[0];
   return {
-    totalBookings: row.total_bookings,
-    upcomingAppointments: row.upcoming_appointments,
-    todayAppointments: row.today_appointments,
-    paidDeposits: row.paid_deposits,
-    totalMessages: row.total_messages,
-    newMessages: row.new_messages,
+    totalBookings: Number(row?.total_bookings ?? 0),
+    upcomingAppointments: Number(row?.upcoming_appointments ?? 0),
+    todayAppointments: Number(row?.today_appointments ?? 0),
+    paidDeposits: Number(row?.paid_deposits ?? 0),
+    totalMessages: Number(row?.total_messages ?? 0),
+    newMessages: Number(row?.new_messages ?? 0),
   } satisfies AdminMetrics;
 }

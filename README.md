@@ -1,6 +1,6 @@
 # Baby Sonovue LTD — Clinic Ultrasound Scans (Demo)
 
-Modern Next.js 14+ App Router demo that recreates and upgrades the “Clinic Ultrasound Scans – Baby Sonovue LTD” page with improved UX, performance, and SEO.
+Modern Next.js App Router site for Baby Sonovue with scan pages, booking flow, blood screening, and an internal admin portal.
 
 ## Getting started
 
@@ -20,29 +20,33 @@ Open `http://localhost:3000` to view the site.
 
 ## Project structure
 
-- `src/app/` — App Router pages (`/`, `/services/clinic-ultrasound-scans`, `/contact`)
+- `src/app/` — App Router pages
 - `src/components/` — Reusable UI components
-- `src/content/clinicUltrasoundScans.ts` — **All editable content** and brand details
-- `public/` — Local placeholder assets used with `next/image`
+- `src/content/clinicUltrasoundScans.ts` — Main editable clinic content and brand details
+- `src/content/homeScans.ts` — Home-scan page content
+- `src/content/bloodScreening.ts` — Blood-screening page content
+- `src/lib/` — Booking, admin, Stripe, and database helpers
+- `public/` — Local assets used with `next/image`
 
-## Updating content
+## Content updates
 
-All copy, pricing, packages, and brand details live in:
+Most marketing copy, package labels, FAQs, and brand details live in:
 
 - `src/content/clinicUltrasoundScans.ts`
-
-Update this file to edit the hero text, packages, FAQs, contact info, or canonical base URL.
+- `src/content/homeScans.ts`
+- `src/content/bloodScreening.ts`
 
 ## Booking and payments
 
-The scan booking flow now uses:
+The booking flow uses:
 
-- `POST /api/bookings` — creates a persisted booking record
+- `POST /api/bookings` — creates a booking record in the hosted database
 - `POST /api/stripe/webhook` — updates payment state from Stripe events
-- `data/bookings.sqlite` — local SQLite database file
+- Stripe Checkout for test or live deposits
 
-Environment variables:
+Required environment variables:
 
+- `DATABASE_URL`
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `BOOKING_DEPOSIT_AMOUNT_PENCE` (defaults to `2500`)
@@ -57,30 +61,30 @@ Environment variables:
 - `ADMIN_PASSWORD`
 - `ADMIN_SESSION_SECRET`
 
-Copy `.env.example` to `.env.local` before testing Stripe locally.
+Copy `.env.example` to `.env.local` before local testing.
 
-The general contact form still submits to:
+The general contact form submits to:
 
 - `POST /api/contact`
 
 ## Admin portal
 
-The app now includes an internal admin portal at:
+The app includes an internal admin portal at:
 
 - `/admin`
 
 Features:
 
-- patient contact messages stored in SQLite
+- patient contact messages stored in the hosted database
 - booking and deposit status view
 - appointment calendar by month
 - upcoming appointments list with a patient detail panel
 - all-appointments history for the doctor
+- payment settings for deposit amount
 
 ## Booking email notifications
 
-When Stripe confirms a paid booking, the app now sends a notification email with the patient and
-appointment details.
+When Stripe confirms a paid booking, the app sends a notification email with the patient and appointment details.
 
 This uses SMTP. Configure:
 
@@ -92,17 +96,15 @@ This uses SMTP. Configure:
 - `SMTP_FROM`
 - `BOOKING_NOTIFICATION_EMAIL`
 
-The notification is sent after a successful paid booking event, not when a draft booking request is
-first created.
-
-Admin access uses env-based credentials and an HTTP-only session cookie. Set:
-
-- `ADMIN_USERNAME`
-- `ADMIN_PASSWORD`
-- `ADMIN_SESSION_SECRET`
-
-before using `/admin/login`.
+The notification is sent after a successful paid booking event, not when a draft booking request is first created.
 
 ## Deployment
 
-Deploy on a Node.js platform that supports `node:sqlite` and persistent disk storage, or replace the SQLite layer with a hosted database before going live. Set your canonical base URL in `src/content/clinicUltrasoundScans.ts` before going live.
+For Vercel deployment:
+
+- use a hosted Postgres database and set `DATABASE_URL`
+- keep Stripe in test mode for demo deployments if needed
+- configure all environment variables in the Vercel project settings
+- set your canonical base URL in `src/content/clinicUltrasoundScans.ts` before going live
+
+This project no longer relies on local SQLite, so it is compatible with a hosted Vercel-style deployment once `DATABASE_URL` is configured.

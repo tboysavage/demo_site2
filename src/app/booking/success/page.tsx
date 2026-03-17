@@ -12,7 +12,7 @@ type PageProps = {
 
 export default async function BookingSuccessPage({ searchParams }: PageProps) {
   const { reference } = await searchParams;
-  const booking = reference ? getBookingByReference(reference) : null;
+  const booking = reference ? await getBookingByReference(reference) : null;
 
   return (
     <div className="pb-24">

@@ -32,18 +32,18 @@ export async function POST(request: Request) {
     );
   }
 
-  if (hasProcessedWebhook(event.id)) {
+  if (await hasProcessedWebhook(event.id)) {
     return NextResponse.json({ received: true, duplicate: true });
   }
 
   const session = event.data.object;
   const bookingReference = session.metadata?.booking_reference ?? null;
   const booking =
-    (session.id ? getBookingByCheckoutSessionId(session.id) : null) ??
-    (bookingReference ? getBookingByReference(bookingReference) : null);
+    (session.id ? await getBookingByCheckoutSessionId(session.id) : null) ??
+    (bookingReference ? await getBookingByReference(bookingReference) : null);
 
   if (!booking) {
-    markWebhookProcessed(event.id);
+    await markWebhookProcessed(event.id);
     return NextResponse.json({ received: true, ignored: true });
   }
 
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       event.type === "checkout.session.completed" ||
       event.type === "checkout.session.async_payment_succeeded"
     ) {
-      updateBookingPaymentState({
+      await updateBookingPaymentState({
         reference: booking.reference,
         bookingStatus: "pending_confirmation",
         paymentStatus: "paid",
@@ -62,18 +62,18 @@ export async function POST(request: Request) {
         eventPayload: session,
       });
 
-      if (!hasSentBookingNotification(booking.reference, NEW_BOOKING_NOTIFICATION_TYPE)) {
-        const detailedBooking = getAdminBookingByReference(booking.reference);
+      if (!(await hasSentBookingNotification(booking.reference, NEW_BOOKING_NOTIFICATION_TYPE))) {
+        const detailedBooking = await getAdminBookingByReference(booking.reference);
 
         if (!detailedBooking) {
           throw new Error(`Booking ${booking.reference} could not be loaded for email notification.`);
         }
 
         await sendNewAppointmentNotification(detailedBooking);
-        markBookingNotificationSent(booking.reference, NEW_BOOKING_NOTIFICATION_TYPE);
+        await markBookingNotificationSent(booking.reference, NEW_BOOKING_NOTIFICATION_TYPE);
       }
     } else if (event.type === "checkout.session.expired") {
-      updateBookingPaymentState({
+      await updateBookingPaymentState({
         reference: booking.reference,
         bookingStatus: "deposit_expired",
         paymentStatus: "expired",
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
         eventPayload: session,
       });
     } else if (event.type === "checkout.session.async_payment_failed") {
-      updateBookingPaymentState({
+      await updateBookingPaymentState({
         reference: booking.reference,
         bookingStatus: "deposit_failed",
         paymentStatus: "failed",
@@ -94,7 +94,7 @@ export async function POST(request: Request) {
       });
     }
 
-    markWebhookProcessed(event.id);
+    await markWebhookProcessed(event.id);
   } catch (error) {
     console.error("Stripe webhook handling failed", error);
     return NextResponse.json(

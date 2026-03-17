@@ -26,6 +26,6 @@ export async function POST(request: Request) {
     return redirectWithStatus(request, "payment-error");
   }
 
-  updateConfiguredDepositAmountPence(Math.round(parsedAmount * 100));
+  await updateConfiguredDepositAmountPence(Math.round(parsedAmount * 100));
   return redirectWithStatus(request, "payment-saved");
 }

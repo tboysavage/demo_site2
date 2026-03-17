@@ -49,7 +49,7 @@ export async function createDepositCheckoutSession(params: {
   origin: string;
 }) {
   const depositAmountPence =
-    params.booking.depositAmountPence || getConfiguredDepositAmountPence();
+    params.booking.depositAmountPence || (await getConfiguredDepositAmountPence());
   const formData = new URLSearchParams();
 
   formData.append("mode", "payment");

@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Contact request is incomplete." }, { status: 400 });
   }
 
-  createContactMessage({
+  await createContactMessage({
     name: payload.name,
     email: payload.email,
     phone: payload.phone,

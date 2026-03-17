@@ -59,27 +59,32 @@ function getStripeKeyStatus(rawValue: string | undefined): StripeKeyStatus {
   };
 }
 
-export function getConfiguredDepositAmountPence() {
-  const row = getDatabase()
-    .prepare("SELECT value FROM app_settings WHERE key = ?")
-    .get(DEPOSIT_AMOUNT_KEY) as { value: string } | undefined;
+export async function getConfiguredDepositAmountPence() {
+  const sql = await getDatabase();
+  const rows = await sql<{ value: string }[]>`
+    SELECT value
+    FROM app_settings
+    WHERE key = ${DEPOSIT_AMOUNT_KEY}
+    LIMIT 1
+  `;
 
-  return parsePositiveInteger(row?.value) ?? getEnvDepositAmountPence();
+  return parsePositiveInteger(rows[0]?.value) ?? getEnvDepositAmountPence();
 }
 
-export function updateConfiguredDepositAmountPence(amountPence: number) {
+export async function updateConfiguredDepositAmountPence(amountPence: number) {
   const updatedAt = new Date().toISOString();
-  getDatabase()
-    .prepare(
-      `INSERT INTO app_settings (key, value, updated_at)
-       VALUES (?, ?, ?)
-       ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`
-    )
-    .run(DEPOSIT_AMOUNT_KEY, String(amountPence), updatedAt);
+  const sql = await getDatabase();
+
+  await sql`
+    INSERT INTO app_settings (key, value, updated_at)
+    VALUES (${DEPOSIT_AMOUNT_KEY}, ${String(amountPence)}, ${updatedAt})
+    ON CONFLICT (key)
+    DO UPDATE SET value = EXCLUDED.value, updated_at = EXCLUDED.updated_at
+  `;
 }
 
-export function getPaymentSettings(): PaymentSettings {
-  const depositAmountPence = getConfiguredDepositAmountPence();
+export async function getPaymentSettings(): Promise<PaymentSettings> {
+  const depositAmountPence = await getConfiguredDepositAmountPence();
 
   return {
     depositAmountPence,

@@ -112,7 +112,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Booking package data does not match the selected option." }, { status: 400 });
   }
 
-  const booking = createBooking({
+  const booking = await createBooking({
     requestedService: payload.requestedService,
     requestedPackageGroupId: payload.requestedPackageGroupId,
     package: {
@@ -164,14 +164,14 @@ export async function POST(request: Request) {
     if (!session.url) {
       throw new Error("Stripe did not return a checkout URL.");
     }
-    attachCheckoutSession(booking.reference, session.id);
+    await attachCheckoutSession(booking.reference, session.id);
 
     return NextResponse.json({
       reference: booking.reference,
       checkoutUrl: session.url,
     });
   } catch (error) {
-    updateBookingPaymentState({
+    await updateBookingPaymentState({
       reference: booking.reference,
       bookingStatus: "deposit_failed",
       paymentStatus: "failed",

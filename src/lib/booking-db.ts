@@ -124,8 +124,8 @@ function mapBooking(row: BookingRow): BookingRecord {
     packageGroupTitle: row.package_group_title,
     packageWeeks: row.package_weeks,
     packagePriceLabel: row.package_price_label,
-    gestationWeeks: row.gestation_weeks,
-    gestationDays: row.gestation_days,
+    gestationWeeks: Number(row.gestation_weeks),
+    gestationDays: Number(row.gestation_days),
     appointmentDate: row.appointment_date,
     appointmentTime: row.appointment_time,
     locationLabel: row.location_label,
@@ -134,7 +134,7 @@ function mapBooking(row: BookingRow): BookingRecord {
     customerEmail: row.customer_email,
     bookingStatus: row.booking_status,
     paymentStatus: row.payment_status,
-    depositAmountPence: row.deposit_amount_pence,
+    depositAmountPence: Number(row.deposit_amount_pence),
     depositCurrency: row.deposit_currency,
     stripeCheckoutSessionId: row.stripe_checkout_session_id,
     stripePaymentIntentId: row.stripe_payment_intent_id,
@@ -153,142 +153,158 @@ function makeReference() {
   return `BSV-${stamp}-${suffix}`;
 }
 
-function addBookingEvent(reference: string, eventType: string, eventPayload: unknown) {
-  const database = getDatabase();
-  database
-    .prepare(
-      `INSERT INTO booking_events (booking_reference, event_type, event_payload, created_at)
-       VALUES (?, ?, ?, ?)`
-    )
-    .run(reference, eventType, JSON.stringify(eventPayload ?? null), nowIso());
+async function addBookingEvent(
+  sql: Awaited<ReturnType<typeof getDatabase>>,
+  reference: string,
+  eventType: string,
+  eventPayload: unknown,
+) {
+  await sql`
+    INSERT INTO booking_events (booking_reference, event_type, event_payload, created_at)
+    VALUES (${reference}, ${eventType}, ${JSON.stringify(eventPayload ?? null)}, ${nowIso()})
+  `;
 }
 
-export function createBooking(input: CreateBookingInput) {
-  const database = getDatabase();
+export async function createBooking(input: CreateBookingInput) {
+  const sql = await getDatabase();
   const reference = makeReference();
   const createdAt = nowIso();
-  const depositAmountPence = getConfiguredDepositAmountPence();
+  const depositAmountPence = await getConfiguredDepositAmountPence();
   const manualWeeks = input.pregnancy.weeksDue ? Number.parseInt(input.pregnancy.weeksDue, 10) : null;
   const manualDays = input.pregnancy.daysDue ? Number.parseInt(input.pregnancy.daysDue, 10) : null;
 
-  database
-    .prepare(
-      `INSERT INTO bookings (
-        reference,
-        service,
-        package_id,
-        package_title,
-        package_group_id,
-        package_group_title,
-        package_weeks,
-        package_price_label,
-        pregnancy_mode,
-        pregnancy_multiple,
-        due_date,
-        cycle_date,
-        manual_weeks_due,
-        manual_days_due,
-        gestation_weeks,
-        gestation_days,
-        location_id,
-        location_label,
-        appointment_date,
-        appointment_time,
-        customer_first_name,
-        customer_last_name,
-        customer_email,
-        customer_phone,
-        customer_address_line1,
-        customer_town_or_city,
-        customer_postcode,
-        customer_date_of_birth,
-        customer_notes,
-        booking_status,
-        payment_status,
-        deposit_amount_pence,
-        deposit_currency,
-        raw_payload,
-        created_at,
-        updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    )
-    .run(
+  await sql`
+    INSERT INTO bookings (
       reference,
-      input.requestedService,
-      input.package.id,
-      input.package.title,
-      input.requestedPackageGroupId,
-      input.package.group,
-      input.package.weeks,
-      input.package.price ?? null,
-      input.pregnancy.mode,
-      input.pregnancy.multiple,
-      input.pregnancy.dueDate ?? null,
-      input.pregnancy.cycleDate ?? null,
-      Number.isNaN(manualWeeks ?? Number.NaN) ? null : manualWeeks,
-      Number.isNaN(manualDays ?? Number.NaN) ? null : manualDays,
-      input.gestationWeeks,
-      input.gestationDays,
-      input.appointment.locationId,
-      input.appointment.location,
-      input.appointment.preferredDate,
-      input.appointment.preferredTime,
-      input.customer.firstName,
-      input.customer.lastName,
-      input.customer.email,
-      input.customer.phone,
-      input.customer.addressLine1,
-      input.customer.townOrCity,
-      input.customer.postcode,
-      input.customer.dateOfBirth,
-      input.customer.notes ?? null,
-      "awaiting_deposit",
-      "pending",
-      depositAmountPence,
-      DEFAULT_CURRENCY,
-      JSON.stringify(input),
-      createdAt,
-      createdAt,
-    );
+      service,
+      package_id,
+      package_title,
+      package_group_id,
+      package_group_title,
+      package_weeks,
+      package_price_label,
+      pregnancy_mode,
+      pregnancy_multiple,
+      due_date,
+      cycle_date,
+      manual_weeks_due,
+      manual_days_due,
+      gestation_weeks,
+      gestation_days,
+      location_id,
+      location_label,
+      appointment_date,
+      appointment_time,
+      customer_first_name,
+      customer_last_name,
+      customer_email,
+      customer_phone,
+      customer_address_line1,
+      customer_town_or_city,
+      customer_postcode,
+      customer_date_of_birth,
+      customer_notes,
+      booking_status,
+      payment_status,
+      deposit_amount_pence,
+      deposit_currency,
+      raw_payload,
+      created_at,
+      updated_at
+    ) VALUES (
+      ${reference},
+      ${input.requestedService},
+      ${input.package.id},
+      ${input.package.title},
+      ${input.requestedPackageGroupId},
+      ${input.package.group},
+      ${input.package.weeks},
+      ${input.package.price ?? null},
+      ${input.pregnancy.mode},
+      ${input.pregnancy.multiple},
+      ${input.pregnancy.dueDate ?? null},
+      ${input.pregnancy.cycleDate ?? null},
+      ${Number.isNaN(manualWeeks ?? Number.NaN) ? null : manualWeeks},
+      ${Number.isNaN(manualDays ?? Number.NaN) ? null : manualDays},
+      ${input.gestationWeeks},
+      ${input.gestationDays},
+      ${input.appointment.locationId},
+      ${input.appointment.location},
+      ${input.appointment.preferredDate},
+      ${input.appointment.preferredTime},
+      ${input.customer.firstName},
+      ${input.customer.lastName},
+      ${input.customer.email},
+      ${input.customer.phone},
+      ${input.customer.addressLine1},
+      ${input.customer.townOrCity},
+      ${input.customer.postcode},
+      ${input.customer.dateOfBirth},
+      ${input.customer.notes ?? null},
+      ${"awaiting_deposit"},
+      ${"pending"},
+      ${depositAmountPence},
+      ${DEFAULT_CURRENCY},
+      ${JSON.stringify(input)},
+      ${createdAt},
+      ${createdAt}
+    )
+  `;
 
-  addBookingEvent(reference, "booking_created", input);
-  const booking = getBookingByReference(reference);
-  if (!booking) {
+  await addBookingEvent(sql, reference, "booking_created", input);
+
+  const rows = await sql<BookingRow[]>`
+    SELECT *
+    FROM bookings
+    WHERE reference = ${reference}
+    LIMIT 1
+  `;
+
+  const row = rows[0];
+  if (!row) {
     throw new Error("Booking could not be loaded after creation.");
   }
-  return booking;
+
+  return mapBooking(row);
 }
 
-export function getBookingByReference(reference: string) {
-  const row = getDatabase()
-    .prepare("SELECT * FROM bookings WHERE reference = ?")
-    .get(reference) as BookingRow | undefined;
+export async function getBookingByReference(reference: string) {
+  const sql = await getDatabase();
+  const rows = await sql<BookingRow[]>`
+    SELECT *
+    FROM bookings
+    WHERE reference = ${reference}
+    LIMIT 1
+  `;
 
-  return row ? mapBooking(row) : null;
+  return rows[0] ? mapBooking(rows[0]) : null;
 }
 
-export function getBookingByCheckoutSessionId(sessionId: string) {
-  const row = getDatabase()
-    .prepare("SELECT * FROM bookings WHERE stripe_checkout_session_id = ?")
-    .get(sessionId) as BookingRow | undefined;
+export async function getBookingByCheckoutSessionId(sessionId: string) {
+  const sql = await getDatabase();
+  const rows = await sql<BookingRow[]>`
+    SELECT *
+    FROM bookings
+    WHERE stripe_checkout_session_id = ${sessionId}
+    LIMIT 1
+  `;
 
-  return row ? mapBooking(row) : null;
+  return rows[0] ? mapBooking(rows[0]) : null;
 }
 
-export function attachCheckoutSession(reference: string, sessionId: string) {
-  const database = getDatabase();
+export async function attachCheckoutSession(reference: string, sessionId: string) {
+  const sql = await getDatabase();
   const updatedAt = nowIso();
-  database
-    .prepare(
-      `UPDATE bookings
-       SET stripe_checkout_session_id = ?, updated_at = ?
-       WHERE reference = ?`
-    )
-    .run(sessionId, updatedAt, reference);
-  addBookingEvent(reference, "checkout_session_created", { sessionId });
+
+  await sql`
+    UPDATE bookings
+    SET stripe_checkout_session_id = ${sessionId}, updated_at = ${updatedAt}
+    WHERE reference = ${reference}
+  `;
+  await addBookingEvent(sql, reference, "checkout_session_created", { sessionId });
 }
 
-export function updateBookingPaymentState(params: {
+export async function updateBookingPaymentState(params: {
   reference: string;
   bookingStatus: BookingStatus;
   paymentStatus: PaymentStatus;
@@ -297,59 +313,58 @@ export function updateBookingPaymentState(params: {
   eventType: string;
   eventPayload?: unknown;
 }) {
-  const database = getDatabase();
+  const sql = await getDatabase();
   const updatedAt = nowIso();
-  database
-    .prepare(
-      `UPDATE bookings
-       SET booking_status = ?,
-           payment_status = ?,
-           stripe_payment_status = ?,
-           stripe_payment_intent_id = COALESCE(?, stripe_payment_intent_id),
-           updated_at = ?
-       WHERE reference = ?`
-    )
-    .run(
-      params.bookingStatus,
-      params.paymentStatus,
-      params.stripePaymentStatus ?? null,
-      params.stripePaymentIntentId ?? null,
-      updatedAt,
-      params.reference,
-    );
-  addBookingEvent(params.reference, params.eventType, params.eventPayload ?? null);
+
+  await sql`
+    UPDATE bookings
+    SET booking_status = ${params.bookingStatus},
+        payment_status = ${params.paymentStatus},
+        stripe_payment_status = ${params.stripePaymentStatus ?? null},
+        stripe_payment_intent_id = COALESCE(${params.stripePaymentIntentId ?? null}, stripe_payment_intent_id),
+        updated_at = ${updatedAt}
+    WHERE reference = ${params.reference}
+  `;
+  await addBookingEvent(sql, params.reference, params.eventType, params.eventPayload ?? null);
 }
 
-export function hasProcessedWebhook(eventId: string) {
-  const row = getDatabase()
-    .prepare("SELECT event_id FROM processed_webhooks WHERE event_id = ?")
-    .get(eventId) as { event_id: string } | undefined;
-  return Boolean(row);
+export async function hasProcessedWebhook(eventId: string) {
+  const sql = await getDatabase();
+  const rows = await sql<{ event_id: string }[]>`
+    SELECT event_id
+    FROM processed_webhooks
+    WHERE event_id = ${eventId}
+    LIMIT 1
+  `;
+  return Boolean(rows[0]);
 }
 
-export function markWebhookProcessed(eventId: string) {
-  getDatabase()
-    .prepare("INSERT INTO processed_webhooks (event_id, created_at) VALUES (?, ?)")
-    .run(eventId, nowIso());
+export async function markWebhookProcessed(eventId: string) {
+  const sql = await getDatabase();
+  await sql`
+    INSERT INTO processed_webhooks (event_id, created_at)
+    VALUES (${eventId}, ${nowIso()})
+    ON CONFLICT (event_id) DO NOTHING
+  `;
 }
 
-export function hasSentBookingNotification(reference: string, notificationType: string) {
-  const row = getDatabase()
-    .prepare(
-      `SELECT booking_reference
-       FROM booking_notifications
-       WHERE booking_reference = ? AND notification_type = ?`
-    )
-    .get(reference, notificationType) as { booking_reference: string } | undefined;
+export async function hasSentBookingNotification(reference: string, notificationType: string) {
+  const sql = await getDatabase();
+  const rows = await sql<{ booking_reference: string }[]>`
+    SELECT booking_reference
+    FROM booking_notifications
+    WHERE booking_reference = ${reference} AND notification_type = ${notificationType}
+    LIMIT 1
+  `;
 
-  return Boolean(row);
+  return Boolean(rows[0]);
 }
 
-export function markBookingNotificationSent(reference: string, notificationType: string) {
-  getDatabase()
-    .prepare(
-      `INSERT OR IGNORE INTO booking_notifications (booking_reference, notification_type, created_at)
-       VALUES (?, ?, ?)`
-    )
-    .run(reference, notificationType, nowIso());
+export async function markBookingNotificationSent(reference: string, notificationType: string) {
+  const sql = await getDatabase();
+  await sql`
+    INSERT INTO booking_notifications (booking_reference, notification_type, created_at)
+    VALUES (${reference}, ${notificationType}, ${nowIso()})
+    ON CONFLICT (booking_reference, notification_type) DO NOTHING
+  `;
 }
