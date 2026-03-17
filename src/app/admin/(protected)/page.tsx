@@ -1,6 +1,7 @@
 import AdminUpcomingAppointments from "@/components/AdminUpcomingAppointments";
 import AdminCalendar from "@/components/AdminCalendar";
 import { getAdminMetrics, listAdminBookings, listContactMessages } from "@/lib/admin-data";
+import { MIN_ADMIN_PASSWORD_LENGTH } from "@/lib/admin-auth";
 import {
   adminDateFormatter,
   adminDateTimeFormatter,
@@ -18,6 +19,7 @@ type PageProps = {
   searchParams: Promise<{
     month?: string;
     settings?: string;
+    security?: string;
   }>;
 };
 
@@ -59,8 +61,47 @@ function getSettingsNotice(status: string | undefined) {
   return null;
 }
 
+function getSecurityNotice(status: string | undefined) {
+  if (status === "password-saved") {
+    return {
+      kind: "success" as const,
+      message: "Password updated. Other active admin sessions were signed out.",
+    };
+  }
+
+  if (status === "password-invalid-current") {
+    return {
+      kind: "error" as const,
+      message: "The current password did not match the admin account.",
+    };
+  }
+
+  if (status === "password-mismatch") {
+    return {
+      kind: "error" as const,
+      message: "The new password confirmation did not match.",
+    };
+  }
+
+  if (status === "password-too-short") {
+    return {
+      kind: "error" as const,
+      message: `Use at least ${MIN_ADMIN_PASSWORD_LENGTH} characters for the new password.`,
+    };
+  }
+
+  if (status === "password-same") {
+    return {
+      kind: "error" as const,
+      message: "Choose a different password instead of reusing the current one.",
+    };
+  }
+
+  return null;
+}
+
 export default async function AdminDashboardPage({ searchParams }: PageProps) {
-  const { month, settings } = await searchParams;
+  const { month, settings, security } = await searchParams;
   const displayMonth = parseMonthParam(month);
   const monthStart = new Date(displayMonth.getFullYear(), displayMonth.getMonth(), 1);
   const monthEnd = new Date(displayMonth.getFullYear(), displayMonth.getMonth() + 1, 0);
@@ -85,6 +126,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
   const contactMessages = await listContactMessages(100);
   const paymentSettings = await getPaymentSettings();
   const settingsNotice = getSettingsNotice(settings);
+  const securityNotice = getSecurityNotice(security);
 
   return (
     <div className="pb-24">
@@ -101,6 +143,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
           <div className="flex flex-wrap items-center gap-3">
             {[
               ["#calendar", "Calendar"],
+              ["#security", "Security"],
               ["#payments", "Payment settings"],
               ["#bookings", "Upcoming appointments"],
               ["#all-appointments", "All appointments"],
@@ -144,6 +187,95 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
               <p className="mt-3 text-3xl font-semibold text-slate-900">{card.value}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section id="security" className="mx-auto max-w-6xl px-4 py-16">
+        <div className="rounded-[36px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--accent-strong)]">
+            Security
+          </p>
+          <h2 className="mt-3 font-display text-3xl text-slate-900">Change admin password</h2>
+          <p className="mt-3 text-sm text-muted">
+            Update the admin password here without editing deployment settings. This session stays
+            signed in and other active admin sessions are signed out.
+          </p>
+
+          {securityNotice ? (
+            <div
+              className={`mt-6 rounded-3xl p-4 text-sm font-semibold ${
+                securityNotice.kind === "success"
+                  ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : "border border-red-200 bg-red-50 text-red-700"
+              }`}
+            >
+              {securityNotice.message}
+            </div>
+          ) : null}
+
+          <div className="mt-6 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+            <form
+              action="/api/admin/password"
+              method="post"
+              className="rounded-3xl border border-slate-200 bg-slate-50/70 p-5"
+            >
+              <label className="block space-y-2 text-sm font-semibold text-slate-700">
+                Current password
+                <input
+                  type="password"
+                  name="currentPassword"
+                  autoComplete="current-password"
+                  required
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm"
+                />
+              </label>
+              <label className="mt-4 block space-y-2 text-sm font-semibold text-slate-700">
+                New password
+                <input
+                  type="password"
+                  name="newPassword"
+                  autoComplete="new-password"
+                  required
+                  minLength={MIN_ADMIN_PASSWORD_LENGTH}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm"
+                />
+              </label>
+              <label className="mt-4 block space-y-2 text-sm font-semibold text-slate-700">
+                Confirm new password
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  autoComplete="new-password"
+                  required
+                  minLength={MIN_ADMIN_PASSWORD_LENGTH}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm"
+                />
+              </label>
+              <button
+                type="submit"
+                className="mt-5 rounded-full bg-[var(--accent-strong)] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[var(--ink-strong)]"
+              >
+                Save new password
+              </button>
+            </form>
+
+            <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-5">
+              <p className="text-sm font-semibold text-slate-900">Good password guidance</p>
+              <div className="mt-4 space-y-3 text-sm text-slate-600">
+                <p>
+                  Use at least {MIN_ADMIN_PASSWORD_LENGTH} characters. A short passphrase is easier
+                  to manage than a short complex word.
+                </p>
+                <p>
+                  Avoid reusing the same password from email, Stripe, or your hosting provider.
+                </p>
+                <p>
+                  After the first admin account exists, the environment bootstrap credentials no
+                  longer override it.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

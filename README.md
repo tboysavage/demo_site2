@@ -57,9 +57,8 @@ Required environment variables:
 - `SMTP_PASS`
 - `SMTP_FROM`
 - `BOOKING_NOTIFICATION_EMAIL` (defaults to the brand email in content)
-- `ADMIN_USERNAME`
-- `ADMIN_PASSWORD`
-- `ADMIN_SESSION_SECRET`
+- `ADMIN_USERNAME` (used only to bootstrap the first admin user if none exists yet)
+- `ADMIN_PASSWORD` (used only to bootstrap the first admin user if none exists yet)
 
 Copy `.env.example` to `.env.local` before local testing.
 
@@ -81,6 +80,10 @@ Features:
 - upcoming appointments list with a patient detail panel
 - all-appointments history for the doctor
 - payment settings for deposit amount
+
+The admin portal now uses hashed passwords stored in the database plus revocable session records.
+For a fresh environment, `ADMIN_USERNAME` and `ADMIN_PASSWORD` create the first admin account on
+first use.
 
 ## Booking email notifications
 

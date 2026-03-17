@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   ADMIN_SESSION_COOKIE,
-  createAdminSessionToken,
+  createAdminSession,
   getAdminSessionCookieOptions,
   hasAdminAuthConfig,
   validateAdminCredentials,
@@ -13,12 +13,13 @@ export async function POST(request: Request) {
   const password = String(formData.get("password") ?? "");
   const loginUrl = new URL("/admin/login", request.url);
 
-  if (!hasAdminAuthConfig()) {
+  if (!(await hasAdminAuthConfig())) {
     loginUrl.searchParams.set("error", "not-configured");
     return NextResponse.redirect(loginUrl, { status: 303 });
   }
 
-  if (!validateAdminCredentials(username, password)) {
+  const user = await validateAdminCredentials(username, password);
+  if (!user) {
     loginUrl.searchParams.set("error", "invalid");
     return NextResponse.redirect(loginUrl, { status: 303 });
   }
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
   const response = NextResponse.redirect(new URL("/admin", request.url), { status: 303 });
   response.cookies.set(
     ADMIN_SESSION_COOKIE,
-    createAdminSessionToken(username),
+    await createAdminSession(user.id),
     getAdminSessionCookieOptions(),
   );
   return response;

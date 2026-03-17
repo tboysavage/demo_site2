@@ -120,11 +120,37 @@ async function ensureDatabaseSchema(sql: Sql) {
     )
   `;
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS admin_users (
+      id SERIAL PRIMARY KEY,
+      username TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      is_active BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      last_login_at TEXT
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS admin_sessions (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES admin_users(id) ON DELETE CASCADE,
+      session_token_hash TEXT NOT NULL UNIQUE,
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      last_seen_at TEXT NOT NULL
+    )
+  `;
+
   await sql`CREATE INDEX IF NOT EXISTS idx_bookings_reference ON bookings(reference)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_bookings_session_id ON bookings(stripe_checkout_session_id)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_booking_events_reference ON booking_events(booking_reference)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_booking_notifications_reference ON booking_notifications(booking_reference)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_contact_messages_created_at ON contact_messages(created_at)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_admin_users_username ON admin_users(username)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_admin_sessions_token_hash ON admin_sessions(session_token_hash)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_admin_sessions_user_id ON admin_sessions(user_id)`;
 }
 
 export async function getDatabase() {

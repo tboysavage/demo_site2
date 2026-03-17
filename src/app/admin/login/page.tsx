@@ -25,7 +25,7 @@ export default async function AdminLoginPage({ searchParams }: PageProps) {
 
   const { error } = await searchParams;
   const errorMessage = getAdminLoginErrorMessage(error);
-  const isConfigured = hasAdminAuthConfig();
+  const isConfigured = await hasAdminAuthConfig();
 
   return (
     <div className="pb-24">
@@ -38,14 +38,14 @@ export default async function AdminLoginPage({ searchParams }: PageProps) {
             Portal login
           </h1>
           <p className="mt-4 text-base text-muted">
-            This area is for internal staff only. Use the admin credentials configured for this
-            environment to access bookings, messages, the appointment calendar, and database tools.
+            This area is for internal staff only. Sign in to access bookings, messages, the
+            appointment calendar, and payment settings.
           </p>
 
           {!isConfigured ? (
             <div className="mt-8 rounded-3xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
-              Add `ADMIN_USERNAME`, `ADMIN_PASSWORD`, and `ADMIN_SESSION_SECRET` to `.env.local`
-              before using the admin portal.
+              Add `ADMIN_USERNAME` and `ADMIN_PASSWORD` to your environment to bootstrap the first
+              admin account.
             </div>
           ) : null}
 

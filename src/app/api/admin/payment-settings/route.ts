@@ -1,6 +1,5 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-auth";
+import { getAdminSession } from "@/lib/admin-auth";
 import { updateConfiguredDepositAmountPence } from "@/lib/payment-settings";
 
 function redirectWithStatus(request: Request, status: string) {
@@ -11,10 +10,7 @@ function redirectWithStatus(request: Request, status: string) {
 }
 
 export async function POST(request: Request) {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
-
-  if (!verifyAdminSessionToken(token)) {
+  if (!(await getAdminSession())) {
     return NextResponse.redirect(new URL("/admin/login", request.url), { status: 303 });
   }
 
