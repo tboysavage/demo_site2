@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Accordion, { AccordionItem } from "@/components/Accordion";
 
@@ -30,7 +30,7 @@ function resolveActiveId(
   return hashMatch?.id ?? items[0]?.id ?? "";
 }
 
-export default function Tabs({ items }: TabsProps) {
+function TabsBody({ items }: TabsProps) {
   const searchParams = useSearchParams();
   const packageParam = searchParams.get("package") ?? "";
 
@@ -118,5 +118,52 @@ export default function Tabs({ items }: TabsProps) {
         <Accordion key={activeId} items={accordionItems} defaultOpenId={activeId} />
       </div>
     </div>
+  );
+}
+
+function TabsFallback({ items }: TabsProps) {
+  const activeItem = items[0];
+  const accordionItems: AccordionItem[] = items.map((item) => ({
+    id: item.id,
+    title: item.label,
+    content: item.content,
+  }));
+
+  return (
+    <div className="mt-10">
+      <div className="hidden gap-8 lg:grid lg:grid-cols-[240px_1fr]">
+        <div className="space-y-3" role="tablist" aria-orientation="vertical">
+          {items.map((item, index) => (
+            <div
+              key={item.id}
+              className={`w-full rounded-2xl border px-4 py-3 text-left text-sm font-semibold ${
+                index === 0
+                  ? "border-[var(--accent-strong)] bg-[var(--accent-soft)] text-[var(--ink-strong)]"
+                  : "border-slate-200 bg-white text-slate-600"
+              }`}
+            >
+              <div>{item.label}</div>
+              {item.description ? <div className="mt-1 text-xs text-muted">{item.description}</div> : null}
+            </div>
+          ))}
+        </div>
+        <div>
+          <div className="rounded-3xl border border-slate-200 bg-white p-6">
+            {activeItem?.content}
+          </div>
+        </div>
+      </div>
+      <div className="lg:hidden">
+        <Accordion items={accordionItems} defaultOpenId={activeItem?.id} />
+      </div>
+    </div>
+  );
+}
+
+export default function Tabs(props: TabsProps) {
+  return (
+    <Suspense fallback={<TabsFallback {...props} />}>
+      <TabsBody {...props} />
+    </Suspense>
   );
 }

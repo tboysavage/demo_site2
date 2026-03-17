@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
+import { Suspense, type FormEvent, type ReactNode, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { clinicUltrasoundScansContent } from "@/content/clinicUltrasoundScans";
 import {
@@ -236,7 +236,7 @@ function BookingOptionCard({
   );
 }
 
-export default function BookingWizard() {
+function BookingWizardBody() {
   const searchParams = useSearchParams();
   const requestedPackage = searchParams.get("package");
   const requestedService = searchParams.get("service");
@@ -1155,5 +1155,27 @@ export default function BookingWizard() {
         </div>
       </StepPanel>
     </form>
+  );
+}
+
+function BookingWizardFallback() {
+  return (
+    <div className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--accent-strong)]">
+        Loading
+      </p>
+      <h2 className="mt-3 font-display text-2xl text-slate-900">Preparing booking options</h2>
+      <p className="mt-3 text-sm text-muted">
+        The booking form is loading your selected package and appointment options.
+      </p>
+    </div>
+  );
+}
+
+export default function BookingWizard() {
+  return (
+    <Suspense fallback={<BookingWizardFallback />}>
+      <BookingWizardBody />
+    </Suspense>
   );
 }
