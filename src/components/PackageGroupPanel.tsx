@@ -116,8 +116,82 @@ function PackagePreviewCard({
   );
 }
 
-export default function PackageGroupPanel({ group }: { group: PackageGroup }) {
+function PackageDetailsPanel({
+  packageItem,
+}: {
+  packageItem: Package;
+}) {
   const { ui } = clinicUltrasoundScansContent;
+
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="space-y-6">
+        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-5">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--accent-strong)]">
+              Package details
+            </p>
+            <h3 className="mt-2 text-2xl font-semibold text-slate-900">
+              {packageItem.name}
+            </h3>
+            <p className="mt-2 text-sm font-semibold text-[var(--accent-strong)]">
+              {packageItem.weeks}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <PriceBadge packageItem={packageItem} />
+            <Link
+              href={`/booking?package=${packageItem.id}`}
+              className="inline-flex items-center justify-center rounded-full bg-[var(--accent-strong)] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[var(--ink-strong)]"
+            >
+              {ui.buttons.bookScan}
+            </Link>
+          </div>
+        </div>
+
+        {packageItem.scanFor ? (
+          <div>
+            <p className="text-sm font-semibold text-slate-800">Scan focus</p>
+            <p className="mt-2 text-sm text-muted">{packageItem.scanFor}</p>
+          </div>
+        ) : null}
+
+        {renderList(ui.cardLabels.included, packageItem.includes)}
+        {renderList(
+          ui.cardLabels.growthMeasurements,
+          packageItem.provides,
+          "bg-[var(--ink-strong)]",
+        )}
+        {renderList(
+          ui.cardLabels.additionalNotes,
+          packageItem.notes,
+          "bg-[var(--accent)]",
+        )}
+
+        {packageItem.pricingOptions?.length ? (
+          <div>
+            <p className="text-sm font-semibold text-slate-800">
+              {ui.cardLabels.pricingOptions}
+            </p>
+            <div className="mt-3 space-y-2">
+              {packageItem.pricingOptions.map((option) => (
+                <div
+                  key={option.label}
+                  className="flex items-center justify-between rounded-2xl bg-[var(--accent-soft)] px-4 py-2 text-sm"
+                >
+                  <span>{option.label}</span>
+                  <span className="font-semibold text-slate-900">{option.price}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+export default function PackageGroupPanel({ group }: { group: PackageGroup }) {
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
 
   const selectedPackage = useMemo(
@@ -138,79 +212,24 @@ export default function PackageGroupPanel({ group }: { group: PackageGroup }) {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,24rem)_1fr]">
         <div className="space-y-4">
           {group.packages.map((packageItem) => (
-            <PackagePreviewCard
-              key={packageItem.id}
-              packageItem={packageItem}
-              selected={packageItem.id === selectedPackage?.id}
-              onReadMore={() => setSelectedPackageId(packageItem.id)}
-            />
-          ))}
-        </div>
-
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          {selectedPackage ? (
-            <div className="space-y-6">
-              <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-200 pb-5">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[var(--accent-strong)]">
-                    Package details
-                  </p>
-                  <h3 className="mt-2 text-2xl font-semibold text-slate-900">
-                    {selectedPackage.name}
-                  </h3>
-                  <p className="mt-2 text-sm font-semibold text-[var(--accent-strong)]">
-                    {selectedPackage.weeks}
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <PriceBadge packageItem={selectedPackage} />
-                  <Link
-                    href={`/booking?package=${selectedPackage.id}`}
-                    className="inline-flex items-center justify-center rounded-full bg-[var(--accent-strong)] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[var(--ink-strong)]"
-                  >
-                    {ui.buttons.bookScan}
-                  </Link>
-                </div>
-              </div>
-
-              {selectedPackage.scanFor ? (
-                <div>
-                  <p className="text-sm font-semibold text-slate-800">Scan focus</p>
-                  <p className="mt-2 text-sm text-muted">{selectedPackage.scanFor}</p>
-                </div>
-              ) : null}
-
-              {renderList(ui.cardLabels.included, selectedPackage.includes)}
-              {renderList(
-                ui.cardLabels.growthMeasurements,
-                selectedPackage.provides,
-                "bg-[var(--ink-strong)]",
-              )}
-              {renderList(
-                ui.cardLabels.additionalNotes,
-                selectedPackage.notes,
-                "bg-[var(--accent)]",
-              )}
-
-              {selectedPackage.pricingOptions?.length ? (
-                <div>
-                  <p className="text-sm font-semibold text-slate-800">
-                    {ui.cardLabels.pricingOptions}
-                  </p>
-                  <div className="mt-3 space-y-2">
-                    {selectedPackage.pricingOptions.map((option) => (
-                      <div
-                        key={option.label}
-                        className="flex items-center justify-between rounded-2xl bg-[var(--accent-soft)] px-4 py-2 text-sm"
-                      >
-                        <span>{option.label}</span>
-                        <span className="font-semibold text-slate-900">{option.price}</span>
-                      </div>
-                    ))}
-                  </div>
+            <div key={packageItem.id} className="space-y-4">
+              <PackagePreviewCard
+                packageItem={packageItem}
+                selected={packageItem.id === selectedPackage?.id}
+                onReadMore={() => setSelectedPackageId(packageItem.id)}
+              />
+              {packageItem.id === selectedPackage?.id ? (
+                <div className="xl:hidden">
+                  <PackageDetailsPanel packageItem={packageItem} />
                 </div>
               ) : null}
             </div>
+          ))}
+        </div>
+
+        <div className="hidden xl:block">
+          {selectedPackage ? (
+            <PackageDetailsPanel packageItem={selectedPackage} />
           ) : (
             <div className="flex min-h-60 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-8 text-center">
               <div className="max-w-md space-y-3">

@@ -152,6 +152,29 @@ function getTomorrowValue() {
   return tomorrow.toISOString().slice(0, 10);
 }
 
+function getPreferredLocationId(
+  service: BookingService,
+  locations: readonly BookingLocation[],
+) {
+  if (service === "clinic") {
+    const clinicLocation = locations.find((location) => location.id === "salisbury-clinic");
+    if (clinicLocation) {
+      return clinicLocation.id;
+    }
+  }
+
+  if (service === "blood") {
+    const bloodLocation = locations.find(
+      (location) => location.id === "salisbury-blood-screening",
+    );
+    if (bloodLocation) {
+      return bloodLocation.id;
+    }
+  }
+
+  return locations[0]?.id ?? "";
+}
+
 function StepPanel({
   step,
   title,
@@ -354,6 +377,25 @@ function BookingWizardBody({
       setAppointmentTime("");
     }
   }, [selectedLocation]);
+
+  useEffect(() => {
+    if (!availableLocations.length) {
+      if (locationId) {
+        setLocationId("");
+      }
+      return;
+    }
+
+    const hasCurrentLocation = availableLocations.some(
+      (location) => location.id === locationId,
+    );
+
+    if (hasCurrentLocation) {
+      return;
+    }
+
+    setLocationId(getPreferredLocationId(service, availableLocations));
+  }, [availableLocations, locationId, service]);
 
   useEffect(() => {
     setStepErrors((prev) => ({ ...prev, 3: undefined }));
