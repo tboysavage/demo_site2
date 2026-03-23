@@ -1,12 +1,15 @@
 "use client";
 
 import type React from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { clinicUltrasoundScansContent } from "@/content/clinicUltrasoundScans";
 
 const { brand, navigation } = clinicUltrasoundScansContent;
+const activeNavigationItems = navigation.menu.filter((item) => item.href && item.href !== "#");
+const activeSocialLinks = brand.socials.filter((social) => social.href && social.href !== "#");
 
 const socialIcons: Record<string, React.ReactElement> = {
   Facebook: (
@@ -45,6 +48,39 @@ const socialIcons: Record<string, React.ReactElement> = {
 
 export default function SiteHeader() {
   const pathname = usePathname();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isMenuOpen) {
+      document.body.style.overflow = "";
+      return;
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsMenuOpen(false);
+      }
+    }
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [isMenuOpen]);
+
+  useEffect(() => {
+    function handleResize() {
+      if (window.innerWidth >= 1024) {
+        setIsMenuOpen(false);
+      }
+    }
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   function isActiveNavItem(href: string) {
     const baseHref = href.split("#")[0];
@@ -63,9 +99,9 @@ export default function SiteHeader() {
   return (
     <header className="relative z-30">
       <div className="bg-[var(--ink-strong)] text-white">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-2 text-xs sm:text-sm">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="opacity-80">{brand.address}</span>
+        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-2 text-xs sm:flex-row sm:items-center sm:justify-between sm:text-sm">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="w-full opacity-80 sm:w-auto">{brand.address}</span>
             <a
               href={`tel:${brand.phone}`}
               className="font-semibold tracking-wide"
@@ -79,8 +115,8 @@ export default function SiteHeader() {
               {brand.email}
             </a>
           </div>
-          <div className="flex items-center gap-3">
-            {brand.socials.map((social) => (
+          <div className="flex items-center gap-3 self-end sm:self-auto">
+            {activeSocialLinks.map((social) => (
               <a
                 key={social.label}
                 href={social.href}
@@ -94,7 +130,7 @@ export default function SiteHeader() {
         </div>
       </div>
       <div className="bg-[#c7e7fb]/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
           <Link
             href="/"
             className="flex items-center gap-4 rounded-2xl border-2 border-solid border-[var(--accent-strong)] bg-white/92 px-3 py-2 shadow-sm"
@@ -109,7 +145,7 @@ export default function SiteHeader() {
             />
           </Link>
           <div className="hidden items-center gap-6 lg:flex">
-            {navigation.menu.map((item) => (
+            {activeNavigationItems.map((item) => (
               <Link
                 key={item.label}
                 href={item.href}
@@ -130,24 +166,72 @@ export default function SiteHeader() {
               {navigation.bookButtonLabel}
             </a>
           </div>
-        </div>
-        <div className="lg:hidden">
-          <nav className="mx-auto flex max-w-6xl items-center justify-between gap-4 border-t border-slate-200 px-4 py-3 text-xs font-semibold text-slate-600">
-            {navigation.menu.map((item) => (
-              <Link
-                key={item.label}
-                href={item.href}
-                aria-current={isActiveNavItem(item.href) ? "page" : undefined}
-                className={`rounded-full px-3 py-2 text-center transition ${
-                  isActiveNavItem(item.href)
-                    ? "bg-white text-[var(--accent-strong)] shadow-sm ring-1 ring-slate-200/80"
-                    : "text-slate-600 hover:text-slate-900"
+          <button
+            type="button"
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-site-menu"
+            aria-label={isMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            className="inline-flex items-center gap-3 rounded-full border border-slate-300 bg-white/92 px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-white lg:hidden"
+            onClick={() => setIsMenuOpen((currentState) => !currentState)}
+          >
+            <span>{isMenuOpen ? "Close" : "Menu"}</span>
+            <span className="flex h-4 w-5 flex-col justify-between" aria-hidden="true">
+              <span
+                className={`block h-0.5 w-full rounded-full bg-current transition ${
+                  isMenuOpen ? "translate-y-[7px] rotate-45" : ""
                 }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+              />
+              <span
+                className={`block h-0.5 w-full rounded-full bg-current transition ${
+                  isMenuOpen ? "opacity-0" : ""
+                }`}
+              />
+              <span
+                className={`block h-0.5 w-full rounded-full bg-current transition ${
+                  isMenuOpen ? "-translate-y-[7px] -rotate-45" : ""
+                }`}
+              />
+            </span>
+          </button>
+        </div>
+        <div
+          className={`border-t border-slate-200/80 lg:hidden ${
+            isMenuOpen ? "block" : "hidden"
+          }`}
+        >
+          <div className="mx-auto max-w-6xl px-4 py-4">
+            <nav
+              id="mobile-site-menu"
+              className="rounded-[1.75rem] border border-slate-200 bg-white/95 p-2 shadow-lg"
+            >
+              <div className="flex flex-col gap-1">
+                {activeNavigationItems.map((item) => (
+                  <Link
+                    key={item.label}
+                    href={item.href}
+                    aria-current={isActiveNavItem(item.href) ? "page" : undefined}
+                    className={`rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+                      isActiveNavItem(item.href)
+                        ? "bg-[var(--baby-blue)] text-slate-900 ring-1 ring-slate-200/80"
+                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                    }`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+              <div className="mt-3 border-t border-slate-200 pt-3">
+                <a
+                  href="/booking"
+                  className="block rounded-full bg-[var(--accent-strong)] px-5 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--ink-strong)]"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {navigation.bookButtonLabel}
+                </a>
+              </div>
+            </nav>
+          </div>
         </div>
       </div>
     </header>

@@ -6,12 +6,31 @@ import {
   hasAdminAuthConfig,
   validateAdminCredentials,
 } from "@/lib/admin-auth";
+import { checkRateLimit, getRequestIpAddress } from "@/lib/rate-limit";
+
+export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
   const username = String(formData.get("username") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const loginUrl = new URL("/admin/login", request.url);
+  const requestIp = getRequestIpAddress(request);
+  const rateLimit = checkRateLimit({
+    key: `admin-login:${requestIp}:${username || "unknown"}`,
+    limit: 5,
+    windowMs: 15 * 60 * 1000,
+  });
+
+  if (!rateLimit.allowed) {
+    loginUrl.searchParams.set("error", "rate-limited");
+    return NextResponse.redirect(loginUrl, {
+      status: 303,
+      headers: {
+        "Retry-After": String(rateLimit.retryAfterSeconds),
+      },
+    });
+  }
 
   if (!(await hasAdminAuthConfig())) {
     loginUrl.searchParams.set("error", "not-configured");

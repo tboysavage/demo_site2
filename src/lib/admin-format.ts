@@ -40,7 +40,12 @@ export function getStatusBadgeClass(status: string) {
     return "bg-emerald-100 text-emerald-800";
   }
 
-  if (status === "awaiting_deposit" || status === "pending_confirmation" || status === "pending") {
+  if (
+    status === "awaiting_deposit" ||
+    status === "pending_confirmation" ||
+    status === "pending" ||
+    status === "new"
+  ) {
     return "bg-amber-100 text-amber-800";
   }
 
@@ -48,7 +53,28 @@ export function getStatusBadgeClass(status: string) {
     return "bg-red-100 text-red-800";
   }
 
+  if (status === "read") {
+    return "bg-sky-100 text-sky-800";
+  }
+
+  if (status === "archived" || status === "expired") {
+    return "bg-slate-200 text-slate-700";
+  }
+
   return "bg-slate-200 text-slate-700";
+}
+
+export function formatContactPreference(value: string) {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return adminDateFormatter.format(new Date(`${value}T00:00:00`));
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(value)) {
+    const normalized = value.replace(" ", "T");
+    return adminDateTimeFormatter.format(new Date(normalized));
+  }
+
+  return value;
 }
 
 export function formatPregnancySummary(booking: AdminBookingRecord) {

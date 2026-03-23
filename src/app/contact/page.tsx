@@ -1,7 +1,7 @@
 import BookingForm from "@/components/BookingForm";
 import { clinicUltrasoundScansContent } from "@/content/clinicUltrasoundScans";
 
-const { contactPage, booking, brand, ui } = clinicUltrasoundScansContent;
+const { contactPage, brand, ui } = clinicUltrasoundScansContent;
 
 export default function ContactPage() {
   return (
@@ -28,7 +28,7 @@ export default function ContactPage() {
               </p>
             </div>
           </div>
-          <BookingForm submitLabel={booking.ctaLabel} />
+          <BookingForm submitLabel={contactPage.ctaLabel} />
         </div>
       </section>
     </div>

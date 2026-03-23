@@ -14,7 +14,7 @@ const serviceCards = [
   },
   {
     title: "Second Opinion Scans",
-    href: "/services/second-opinion-scans",
+    href: "/services/clinic-ultrasound-scans?package=second-opinion#packages",
     imageSrc: "/pexels-mart-production-7088526.jpg",
     imageAlt: "Second opinion scans",
   },

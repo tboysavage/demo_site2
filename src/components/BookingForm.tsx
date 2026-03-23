@@ -117,11 +117,10 @@ export default function BookingForm({ submitLabel }: BookingFormProps) {
         <label className="space-y-2 text-sm font-semibold text-slate-700">
           {ui.form.labels.preferredDate}
           <input
-            type="text"
+            type="datetime-local"
             value={values.preferredDate}
             onChange={handleChange("preferredDate")}
             className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm"
-            placeholder={ui.form.placeholders.preferredDate}
           />
           {errors.preferredDate ? (
             <p className="text-xs text-red-500">{errors.preferredDate}</p>

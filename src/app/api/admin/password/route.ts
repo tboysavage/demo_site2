@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { addAdminActivityLog } from "@/lib/admin-data";
 import {
   ADMIN_SESSION_COOKIE,
   MIN_ADMIN_PASSWORD_LENGTH,
@@ -7,10 +8,12 @@ import {
   updateAdminPassword,
 } from "@/lib/admin-auth";
 
+export const runtime = "nodejs";
+
 function redirectWithStatus(request: Request, status: string) {
   const url = new URL("/admin", request.url);
+  url.searchParams.set("tab", "settings");
   url.searchParams.set("security", status);
-  url.hash = "security";
   return NextResponse.redirect(url, { status: 303 });
 }
 
@@ -43,6 +46,13 @@ export async function POST(request: Request) {
   );
 
   if (result === "updated") {
+    await addAdminActivityLog({
+      actorUserId: session.userId,
+      actionType: "admin_password_updated",
+      targetType: "admin_user",
+      targetId: String(session.userId),
+      message: `Updated password for admin account ${session.username}.`,
+    });
     return redirectWithStatus(request, "password-saved");
   }
 

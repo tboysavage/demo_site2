@@ -8,6 +8,7 @@ type PageProps = {
 };
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export default async function BookingCancelPage({ searchParams }: PageProps) {
   const { reference } = await searchParams;
@@ -25,7 +26,7 @@ export default async function BookingCancelPage({ searchParams }: PageProps) {
           </h1>
           <p className="mt-4 text-base text-muted">
             Your booking request was not completed because the Stripe deposit checkout was cancelled.
-            No appointment slot has been confirmed.
+            No deposit was taken and no appointment slot has been confirmed.
           </p>
 
           {booking ? (

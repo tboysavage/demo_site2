@@ -147,6 +147,10 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+function minutesAgoIso(minutes: number) {
+  return new Date(Date.now() - minutes * 60 * 1000).toISOString();
+}
+
 function makeReference() {
   const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   const suffix = randomBytes(3).toString("hex").toUpperCase();
@@ -268,6 +272,31 @@ export async function createBooking(input: CreateBookingInput) {
   return mapBooking(row);
 }
 
+export async function findRecentDuplicateBooking(
+  input: CreateBookingInput,
+  windowMinutes = 15,
+) {
+  const sql = await getDatabase();
+  const rows = await sql<BookingRow[]>`
+    SELECT *
+    FROM bookings
+    WHERE service = ${input.requestedService}
+      AND package_id = ${input.package.id}
+      AND appointment_date = ${input.appointment.preferredDate}
+      AND appointment_time = ${input.appointment.preferredTime}
+      AND customer_first_name = ${input.customer.firstName}
+      AND customer_last_name = ${input.customer.lastName}
+      AND customer_email = ${input.customer.email}
+      AND customer_phone = ${input.customer.phone}
+      AND created_at >= ${minutesAgoIso(windowMinutes)}
+      AND booking_status <> ${"cancelled"}
+    ORDER BY created_at DESC
+    LIMIT 1
+  `;
+
+  return rows[0] ? mapBooking(rows[0]) : null;
+}
+
 export async function getBookingByReference(reference: string) {
   const sql = await getDatabase();
   const rows = await sql<BookingRow[]>`
@@ -325,6 +354,33 @@ export async function updateBookingPaymentState(params: {
         updated_at = ${updatedAt}
     WHERE reference = ${params.reference}
   `;
+  await addBookingEvent(sql, params.reference, params.eventType, params.eventPayload ?? null);
+}
+
+export async function updateAdminBooking(params: {
+  reference: string;
+  bookingStatus?: BookingStatus;
+  appointmentDate?: string;
+  appointmentTime?: string;
+  locationId?: string;
+  locationLabel?: string;
+  eventType: string;
+  eventPayload?: unknown;
+}) {
+  const sql = await getDatabase();
+  const updatedAt = nowIso();
+
+  await sql`
+    UPDATE bookings
+    SET booking_status = COALESCE(${params.bookingStatus ?? null}, booking_status),
+        appointment_date = COALESCE(${params.appointmentDate ?? null}, appointment_date),
+        appointment_time = COALESCE(${params.appointmentTime ?? null}, appointment_time),
+        location_id = COALESCE(${params.locationId ?? null}, location_id),
+        location_label = COALESCE(${params.locationLabel ?? null}, location_label),
+        updated_at = ${updatedAt}
+    WHERE reference = ${params.reference}
+  `;
+
   await addBookingEvent(sql, params.reference, params.eventType, params.eventPayload ?? null);
 }
 

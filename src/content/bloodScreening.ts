@@ -55,7 +55,7 @@ export const bloodScreeningContent = {
         {
           id: "gender-dna",
           kind: "package",
-          title: "Gender DNA Test (6-40 Wks.)",
+          title: "Gender DNA Test (6-40 weeks)",
           subtitle:
             "Sneak Peek DNA-based blood test to determine whether you’re having a boy or a girl",
           description: ["Can’t wait to know the sex? Sneak Peek is available from just 6 weeks!"],
@@ -72,7 +72,7 @@ export const bloodScreeningContent = {
         {
           id: "chromosomal-test",
           kind: "package",
-          title: "Chromosomal Test (10-40 Wks.)",
+          title: "Chromosomal Test (10-40 weeks)",
           subtitle: "Blood test to check for chromosomal abnormalities",
           bullets: [
             "Can be performed from 10 weeks onwards",
@@ -84,7 +84,7 @@ export const bloodScreeningContent = {
             "Extremely accurate",
             "Safe for mother and baby",
             "Results available within 10 working days",
-            "Includes a complimentary Early Meet&Bond scan (worth £99)",
+            "Includes a complimentary Early Meet & Bond scan (worth £99)",
           ],
           price: "£399.00",
         },
@@ -92,7 +92,7 @@ export const bloodScreeningContent = {
     },
     {
       id: "fertility-wellbeing",
-      title: "Fertility Blood Tests: Wellbeing Package",
+      title: "Fertility Blood Tests Wellbeing Package",
       description:
         "Designed to help you get all the fertility related information you need.",
       callout: {
@@ -110,7 +110,7 @@ export const bloodScreeningContent = {
         {
           id: "fertility-wellbeing-package",
           kind: "package",
-          title: "Fertility Blood Tests: Wellbeing Package",
+          title: "Fertility Blood Tests Wellbeing Package",
           bullets: [
             "The blood tests you need for your individual fertility Wellbeing",
             "This blood test package is designed to help you get all the fertility related information you need.",
@@ -119,6 +119,7 @@ export const bloodScreeningContent = {
             "5 blood tests at one appointment from the list below: £125",
             "10 blood tests at one appointment from the list below: £200",
           ],
+          price: "From £125",
           ctaLabel: "Read More",
           ctaHref: "/contact",
         },
@@ -132,7 +133,7 @@ export const bloodScreeningContent = {
         {
           id: "amh-package",
           kind: "package",
-          title: "AMH Package",
+          title: "AMH Package (Day 2-5 of your cycle)",
           subtitle: "For day 2 – 5 of your cycle",
           relatedInfoIds: [
             "amh-test",
@@ -269,7 +270,7 @@ export const bloodScreeningContent = {
         {
           id: "testosterone-package",
           kind: "package",
-          title: "Male Fertility Blood Tests: Testosterone Package",
+          title: "Male Fertility Testosterone Package",
           relatedInfoIds: [
             "fbc-male",
             "prolactin-male",
@@ -617,7 +618,7 @@ export const bloodScreeningContent = {
         {
           id: "pregnancy-pegd",
           kind: "package",
-          title: "Meet&bond@ (20-40 weeks) Pre-eclampsia & Gestational Diabetes (PeGD)",
+          title: "Pre-eclampsia & Gestational Diabetes Health Check (20-40 weeks)",
           subtitle: "Non-Invasive Pre-eclampsia And Gestational Diabetes Health Check",
           bullets: [
             "We will measure mum’s weight",
@@ -634,7 +635,7 @@ export const bloodScreeningContent = {
         {
           id: "men-bp-diabetes",
           kind: "package",
-          title: "Blood Pressure and Diabetic Test For Men",
+          title: "Blood Pressure and Diabetic Test for Men",
           subtitle: "The following will be done:",
           bullets: [
             "We will measure your weight",

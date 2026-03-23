@@ -6,6 +6,8 @@ import {
   getAdminSessionCookieOptions,
 } from "@/lib/admin-auth";
 
+export const runtime = "nodejs";
+
 export async function POST(request: Request) {
   const cookieStore = await cookies();
   const currentToken = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;

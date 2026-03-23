@@ -7,9 +7,10 @@ import SectionHeading from "@/components/SectionHeading";
 import Accordion from "@/components/Accordion";
 import { clinicUltrasoundScansContent } from "@/content/clinicUltrasoundScans";
 import { homeScansContent } from "@/content/homeScans";
+import { getResolvedHomePackageGroups } from "@/lib/package-catalog";
 
 const { brand, site, seo, ui, images } = clinicUltrasoundScansContent;
-const { hero, intro, compare, groups, whatToExpect, trust, faqs, faqSection, packagesSection } =
+const { hero, intro, compare, whatToExpect, trust, faqs, faqSection, packagesSection } =
   homeScansContent;
 
 export const metadata: Metadata = {
@@ -35,20 +36,24 @@ export const metadata: Metadata = {
   },
 };
 
-const tabItems: TabItem[] = groups.map((group) => ({
-  id: group.id,
-  label: group.title,
-  description: group.weeks,
-  content: <PackageGroupPanel group={group} />,
-}));
-
 const faqItems = faqs.map((faq, index) => ({
   id: `home-scan-faq-${index}`,
   title: faq.question,
   content: <p>{faq.answer}</p>,
 }));
 
-export default function HomeScansPage() {
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
+export default async function HomeScansPage() {
+  const groups = await getResolvedHomePackageGroups();
+  const tabItems: TabItem[] = groups.map((group) => ({
+    id: group.id,
+    label: group.title,
+    description: group.weeks,
+    content: <PackageGroupPanel group={group} />,
+  }));
+
   const schema = {
     "@context": "https://schema.org",
     "@type": "MedicalClinic",
@@ -108,7 +113,7 @@ export default function HomeScansPage() {
                 />
                 <div className="flex flex-wrap gap-4">
                   <Link
-                    href="/booking?service=home"
+                    href="/contact"
                     className="rounded-full bg-[var(--accent-strong)] px-6 py-3 text-sm font-semibold text-white"
                   >
                     Enquire about home scans
@@ -230,7 +235,7 @@ export default function HomeScansPage() {
                 depending on what works best for you.
               </p>
               <Link
-                href="/booking?service=home"
+                href="/contact"
                 className="mt-4 inline-flex rounded-full bg-[var(--accent-strong)] px-5 py-3 text-sm font-semibold text-white"
               >
                 Contact the team

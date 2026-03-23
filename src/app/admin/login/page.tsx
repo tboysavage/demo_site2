@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getAdminLoginErrorMessage, getAdminSession, hasAdminAuthConfig } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export const metadata = {
   title: "Admin Login",
@@ -44,8 +45,8 @@ export default async function AdminLoginPage({ searchParams }: PageProps) {
 
           {!isConfigured ? (
             <div className="mt-8 rounded-3xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
-              Add `ADMIN_USERNAME` and `ADMIN_PASSWORD` to your environment to bootstrap the first
-              admin account.
+              Admin access has not been set up for this site yet. Ask the site owner to enable the
+              portal before signing in.
             </div>
           ) : null}
 
@@ -62,6 +63,7 @@ export default async function AdminLoginPage({ searchParams }: PageProps) {
                 type="text"
                 name="username"
                 autoComplete="username"
+                required
                 className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm"
               />
             </label>
@@ -71,6 +73,7 @@ export default async function AdminLoginPage({ searchParams }: PageProps) {
                 type="password"
                 name="password"
                 autoComplete="current-password"
+                required
                 className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm"
               />
             </label>

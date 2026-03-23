@@ -87,7 +87,10 @@ first use.
 
 ## Booking email notifications
 
-When Stripe confirms a paid booking, the app sends a notification email with the patient and appointment details.
+The app can send:
+
+- a booking-request email when the patient submits the booking and is sent to Stripe Checkout
+- a payment-confirmed email when Stripe confirms the deposit payment
 
 This uses SMTP. Configure:
 
@@ -99,7 +102,7 @@ This uses SMTP. Configure:
 - `SMTP_FROM`
 - `BOOKING_NOTIFICATION_EMAIL`
 
-The notification is sent after a successful paid booking event, not when a draft booking request is first created.
+If SMTP is missing, bookings still work, but email notifications will not send.
 
 ## Deployment
 
@@ -108,6 +111,12 @@ For Vercel deployment:
 - use a hosted Postgres database and set `DATABASE_URL`
 - keep Stripe in test mode for demo deployments if needed
 - configure all environment variables in the Vercel project settings
+- set `STRIPE_SECRET_KEY` and create a Stripe webhook endpoint for `/api/stripe/webhook`
+- copy the endpoint signing secret into `STRIPE_WEBHOOK_SECRET`
+- set `ADMIN_USERNAME` and `ADMIN_PASSWORD` so the first admin user can be bootstrapped
+- set SMTP variables if you want booking and customer emails to send
 - set your canonical base URL in `src/content/clinicUltrasoundScans.ts` before going live
+- point Stripe webhooks at `/api/stripe/webhook` on the deployed domain
+- expect the package-driven public pages to render dynamically so admin package edits appear without a redeploy
 
 This project no longer relies on local SQLite, so it is compatible with a hosted Vercel-style deployment once `DATABASE_URL` is configured.

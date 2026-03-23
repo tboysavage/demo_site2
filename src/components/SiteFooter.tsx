@@ -2,6 +2,7 @@ import Link from "next/link";
 import { clinicUltrasoundScansContent } from "@/content/clinicUltrasoundScans";
 
 const { brand, navigation, ui } = clinicUltrasoundScansContent;
+const activeNavigationItems = navigation.menu.filter((item) => item.href && item.href !== "#");
 
 export default function SiteFooter() {
   return (
@@ -35,7 +36,7 @@ export default function SiteFooter() {
           </div>
         </div>
         <div className="grid gap-2 text-sm text-slate-600">
-          {navigation.menu.map((item) => (
+          {activeNavigationItems.map((item) => (
             <Link key={item.label} href={item.href}>
               {item.label}
             </Link>

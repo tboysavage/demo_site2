@@ -50,6 +50,10 @@ export async function createDepositCheckoutSession(params: {
 }) {
   const depositAmountPence =
     params.booking.depositAmountPence || (await getConfiguredDepositAmountPence());
+  const depositAmountLabel = new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: (params.booking.depositCurrency || DEFAULT_CURRENCY).toUpperCase(),
+  }).format(depositAmountPence / 100);
   const formData = new URLSearchParams();
 
   formData.append("mode", "payment");
@@ -76,7 +80,9 @@ export async function createDepositCheckoutSession(params: {
   );
   formData.append(
     "line_items[0][price_data][product_data][description]",
-    `Deposit for booking ${params.booking.reference}`,
+    `${depositAmountLabel} deposit only for booking ${params.booking.reference}. Full package price${
+      params.booking.packagePriceLabel ? ` is ${params.booking.packagePriceLabel}` : ""
+    } and is not charged in this Stripe checkout.`,
   );
 
   const response = await fetch(`${STRIPE_API_BASE}/checkout/sessions`, {
@@ -84,6 +90,7 @@ export async function createDepositCheckoutSession(params: {
     headers: {
       Authorization: `Bearer ${getStripeSecretKey()}`,
       "Content-Type": "application/x-www-form-urlencoded",
+      "Idempotency-Key": `booking-checkout-${params.booking.reference}`,
     },
     body: formData,
   });
@@ -94,6 +101,26 @@ export async function createDepositCheckoutSession(params: {
       typeof payload?.error?.message === "string"
         ? payload.error.message
         : "Stripe checkout session creation failed.";
+    throw new Error(message);
+  }
+
+  return payload as StripeCheckoutSession;
+}
+
+export async function getCheckoutSession(sessionId: string) {
+  const response = await fetch(`${STRIPE_API_BASE}/checkout/sessions/${encodeURIComponent(sessionId)}`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${getStripeSecretKey()}`,
+    },
+  });
+
+  const payload = await response.json();
+  if (!response.ok) {
+    const message =
+      typeof payload?.error?.message === "string"
+        ? payload.error.message
+        : "Stripe checkout session lookup failed.";
     throw new Error(message);
   }
 

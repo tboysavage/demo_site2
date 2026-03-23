@@ -20,6 +20,14 @@ type AuthenticatedAdminUser = {
   username: string;
 };
 
+export type AdminUserManagementResult =
+  | "created"
+  | "invalid-username"
+  | "username-taken"
+  | "too-short"
+  | "not-found"
+  | "updated";
+
 type AdminUserRow = {
   id: number;
   username: string;
@@ -68,6 +76,10 @@ function verifyPassword(password: string, storedHash: string) {
   }
 
   return timingSafeEqual(expected, actual);
+}
+
+function isValidAdminUsername(username: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(username) || /^[a-zA-Z0-9._-]{3,64}$/.test(username);
 }
 
 async function countAdminUsers() {
@@ -142,6 +154,63 @@ export async function validateAdminCredentials(username: string, password: strin
     id: user.id,
     username: user.username,
   } satisfies AuthenticatedAdminUser;
+}
+
+export async function createAdminUserAccount(username: string, password: string) {
+  const normalizedUsername = username.trim().toLowerCase();
+  if (!isValidAdminUsername(normalizedUsername)) {
+    return "invalid-username" as const;
+  }
+
+  if (password.length < MIN_ADMIN_PASSWORD_LENGTH) {
+    return "too-short" as const;
+  }
+
+  const sql = await getDatabase();
+  const existingRows = await sql<{ id: number }[]>`
+    SELECT id
+    FROM admin_users
+    WHERE username = ${normalizedUsername}
+    LIMIT 1
+  `;
+
+  if (existingRows[0]) {
+    return "username-taken" as const;
+  }
+
+  const nowIso = new Date().toISOString();
+  await sql`
+    INSERT INTO admin_users (
+      username,
+      password_hash,
+      is_active,
+      created_at,
+      updated_at,
+      last_login_at
+    ) VALUES (
+      ${normalizedUsername},
+      ${hashPassword(password)},
+      TRUE,
+      ${nowIso},
+      ${nowIso},
+      NULL
+    )
+  `;
+
+  return "created" as const;
+}
+
+export async function updateAdminUserActiveState(userId: number, isActive: boolean) {
+  const sql = await getDatabase();
+  const nowIso = new Date().toISOString();
+  const rows = await sql<{ id: number }[]>`
+    UPDATE admin_users
+    SET is_active = ${isActive}, updated_at = ${nowIso}
+    WHERE id = ${userId}
+    RETURNING id
+  `;
+
+  return rows[0] ? ("updated" as const) : ("not-found" as const);
 }
 
 export async function createAdminSession(userId: number) {
@@ -320,8 +389,12 @@ export function getAdminLoginErrorMessage(errorCode: string | undefined) {
     return "The admin username or password was not recognised.";
   }
 
+  if (errorCode === "rate-limited") {
+    return "Too many login attempts were made. Wait a few minutes and try again.";
+  }
+
   if (errorCode === "not-configured") {
-    return "Admin access is not configured yet. Add bootstrap admin credentials or create the first admin user.";
+    return "Admin access has not been set up for this site yet.";
   }
 
   return "";

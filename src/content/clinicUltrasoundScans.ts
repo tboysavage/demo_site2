@@ -26,7 +26,7 @@ export type PackageGroup = {
 export const clinicUltrasoundScansContent = {
   brand: {
     name: "Baby Sonovue LTD",
-    address: "1B Clive Road, Salisbury, Fratton, PO1 5JB",
+    address: "1B Clive Road, Fratton, PO1 5JB",
     postalCode: "PO1 5JB",
     countryCode: "GB",
     phone: "07737493979",
@@ -64,17 +64,17 @@ export const clinicUltrasoundScansContent = {
       { src: "/clinic-3.jpg", alt: "Ultrasound scan in progress" },
     ],
   },
-  navigation: {
-    menu: [
-      { label: "Home", href: "/" },
-      { label: "Book a Scan", href: "/services/clinic-ultrasound-scans" },
-      { label: "Home Scans", href: "/services/home-scans" },
-      { label: "Blood Screening", href: "/blood-screening" },
-      { label: "Gallery", href: "#" },
-      { label: "Contact Us", href: "/contact" },
-    ],
-    bookButtonLabel: "Book A Meeting",
-  },
+    navigation: {
+      menu: [
+        { label: "Home", href: "/" },
+        { label: "Book a Scan", href: "/services/clinic-ultrasound-scans" },
+        { label: "Home Scans", href: "/services/home-scans" },
+        { label: "Blood Screening", href: "/blood-screening" },
+        { label: "Gallery", href: "#" },
+        { label: "Contact Us", href: "/contact" },
+      ],
+    bookButtonLabel: "Book a Meeting",
+    },
   ui: {
     labels: {
       address: "Address",
@@ -110,7 +110,7 @@ export const clinicUltrasoundScansContent = {
       eyebrow: "Private Clinic Ultrasound Scans",
       servicesTitle: "What we do",
       servicesDescription: "Explore scan options by gestational range and focus area.",
-      welcomeTitle: "Welcome to baby Sonovue Salisbury",
+      welcomeTitle: "Welcome to Baby Sonovue Salisbury",
       welcomeBody:
         "At Baby Sonovue, our purpose is to give families peace of mind and confidence throughout pregnancy by providing safe, accurate, and compassionate ultrasound services. We are dedicated to making high-quality scans ,including 2D, 3D, and 4D imaging, as well as health and welbeing checks both accessible and comfortable, whether in our welcoming clinic or in the privacy of your own home, or other place of your choice within Hampshire & The Isle of Wight. With a focus on dignity, respect, and clear communication, we aim to support every family at every stage of pregnancy, offering reassurance, trusted care, and flexibility when it matters most.",
     },
@@ -261,7 +261,7 @@ export const clinicUltrasoundScansContent = {
       packages: [
         {
           id: "package-a",
-          name: "Meet&bond@ (7–14 wks) Wellbeing Scan",
+          name: "Meet & Bond Wellbeing Scan (7-14 weeks)",
           weeks: "7–14 weeks",
           scanFor:
             "2D Scan for: Pregnancy location; Foetal Viability Check; Dating; Meet & bond with Baby; Wellbeing Scan",
@@ -279,7 +279,7 @@ export const clinicUltrasoundScansContent = {
         },
         {
           id: "package-b",
-          name: "Meet&bond@ (14–16 wks) Wellbeing plus Growth Scan",
+          name: "Meet & Bond Wellbeing plus Growth Scan (14-16 weeks)",
           weeks: "14–16 weeks",
           scanFor: "2D Scan for: Dating; Reassurance; Wellbeing; Observation Scan",
           includes: [
@@ -305,7 +305,7 @@ export const clinicUltrasoundScansContent = {
       packages: [
         {
           id: "package-c",
-          name: "Meet&bond@ (16–40 Wks.) Wellbeing & observation",
+          name: "Meet & Bond Wellbeing and Observation Scan (16-40 weeks)",
           weeks: "16–40 weeks",
           includes: [
             "We Will Watch the Baby’s Heart Beating",
@@ -322,7 +322,7 @@ export const clinicUltrasoundScansContent = {
         },
         {
           id: "package-d",
-          name: "Meet&bond@ (16–40 Wks.) Wellbeing, observation plus Growth Scan",
+          name: "Meet & Bond Wellbeing, Observation plus Growth Scan (16-40 weeks)",
           weeks: "16–40 weeks",
           includes: [
             "We Will Watch the Baby’s Heart Beating",
@@ -352,7 +352,7 @@ export const clinicUltrasoundScansContent = {
       packages: [
         {
           id: "package-e",
-          name: "Meet&bond@ (16–40 wks) Wellbeing and Gender scan",
+          name: "Meet & Bond Wellbeing and Gender Scan (16-40 weeks)",
           weeks: "16–40 weeks",
           includes: [
             "We Will Visualise and Listen to Baby’s Heartbeat",
@@ -369,7 +369,7 @@ export const clinicUltrasoundScansContent = {
         },
         {
           id: "package-f",
-          name: "Meet&bond@ (16–40 wks) Wellbeing Gender & Growth scan",
+          name: "Meet & Bond Wellbeing, Gender and Growth Scan (16-40 weeks)",
           weeks: "16–40 weeks",
           includes: [
             "We Will Visualise and Listen to Baby’s Heartbeat",
@@ -401,7 +401,7 @@ export const clinicUltrasoundScansContent = {
       packages: [
         {
           id: "package-g",
-          name: "Meet&bond@ (24–32 wks.) Wellbeing plus 4D",
+          name: "Meet & Bond Wellbeing plus 4D Scan (24-32 weeks)",
           weeks: "24–32 weeks",
           includes: [
             "We Watch and Listen to The Baby’s Heartbeat",
@@ -420,7 +420,7 @@ export const clinicUltrasoundScansContent = {
         },
         {
           id: "package-h",
-          name: "Meet&bond@ (24–32 wks.) Wellbeing plus Growth plus 4D",
+          name: "Meet & Bond Wellbeing, Growth plus 4D Scan (24-32 weeks)",
           weeks: "24–32 weeks",
           includes: [
             "We Watch and Listen to The Baby’s Heartbeat",
@@ -451,14 +451,14 @@ export const clinicUltrasoundScansContent = {
     },
     {
       id: "second-opinion",
-      title: "Meet&bond@SOS – Second Opinion Scan",
+      title: "Meet & Bond SOS Second Opinion Scan",
       description:
         "If you’re experiencing concerns, need clarity, or have received unexpected news, Baby Sonovue is here to give you the information and reassurance you need.",
       weeks: "7–40 Wks",
       packages: [
         {
           id: "package-i",
-          name: "Second Opinion Scan (7–40 Wks)",
+          name: "Second Opinion Scan (7-40 weeks)",
           weeks: "7–40 weeks",
           includes: [
             "Please bring with you the original report of the scan",
@@ -484,7 +484,7 @@ export const clinicUltrasoundScansContent = {
       packages: [
         {
           id: "package-j",
-          name: "Meet&bond@ (18–24 wks.) Wellbeing plus Anatomy Scan",
+          name: "Meet & Bond Wellbeing plus Anatomy Scan (18-24 weeks)",
           weeks: "18–24 weeks",
           includes: [
             "NB: This scan is done after the NHS Anomaly scan. Please bring the anomaly scan report with you",
@@ -557,6 +557,7 @@ export const clinicUltrasoundScansContent = {
   contactPage: {
     title: "Contact Us",
     subtitle: "Share your details and we will get back to you as soon as possible.",
+    ctaLabel: "Send message",
   },
 } as const;
 

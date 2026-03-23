@@ -4,7 +4,10 @@ import type { Sql } from "postgres";
 declare global {
   var __babySonovueDatabase: Sql | undefined;
   var __babySonovueSchemaPromise: Promise<void> | undefined;
+  var __babySonovueSchemaVersion: string | undefined;
 }
+
+const SCHEMA_VERSION = "2026-03-23-package-catalog-v1";
 
 function getDatabaseUrl() {
   const databaseUrl = process.env.DATABASE_URL?.trim();
@@ -12,6 +15,10 @@ function getDatabaseUrl() {
     throw new Error("Missing DATABASE_URL");
   }
   return databaseUrl;
+}
+
+export function hasDatabaseConfig() {
+  return Boolean(process.env.DATABASE_URL?.trim());
 }
 
 function createClient() {
@@ -143,14 +150,66 @@ async function ensureDatabaseSchema(sql: Sql) {
     )
   `;
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS admin_activity_log (
+      id SERIAL PRIMARY KEY,
+      actor_user_id INTEGER REFERENCES admin_users(id) ON DELETE SET NULL,
+      action_type TEXT NOT NULL,
+      target_type TEXT NOT NULL,
+      target_id TEXT,
+      message TEXT NOT NULL,
+      details TEXT,
+      created_at TEXT NOT NULL
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS managed_packages (
+      id SERIAL PRIMARY KEY,
+      package_id TEXT NOT NULL UNIQUE,
+      service TEXT NOT NULL,
+      group_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      weeks TEXT NOT NULL,
+      summary TEXT,
+      description_json TEXT NOT NULL,
+      includes_json TEXT NOT NULL,
+      provides_json TEXT NOT NULL,
+      notes_json TEXT NOT NULL,
+      description_secondary TEXT,
+      price_label TEXT,
+      pricing_options_json TEXT NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `;
+
   await sql`CREATE INDEX IF NOT EXISTS idx_bookings_reference ON bookings(reference)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_bookings_session_id ON bookings(stripe_checkout_session_id)`;
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_bookings_duplicate_lookup
+    ON bookings(
+      package_id,
+      appointment_date,
+      appointment_time,
+      customer_email,
+      customer_phone,
+      created_at
+    )
+  `;
   await sql`CREATE INDEX IF NOT EXISTS idx_booking_events_reference ON booking_events(booking_reference)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_booking_notifications_reference ON booking_notifications(booking_reference)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_contact_messages_created_at ON contact_messages(created_at)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_contact_messages_status ON contact_messages(status)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_admin_users_username ON admin_users(username)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_admin_sessions_token_hash ON admin_sessions(session_token_hash)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_admin_sessions_user_id ON admin_sessions(user_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_admin_activity_log_created_at ON admin_activity_log(created_at DESC)`;
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_managed_packages_service_group_sort
+    ON managed_packages(service, group_id, sort_order, title)
+  `;
 }
 
 export async function getDatabase() {
@@ -158,8 +217,18 @@ export async function getDatabase() {
     globalThis.__babySonovueDatabase = createClient();
   }
 
-  if (!globalThis.__babySonovueSchemaPromise) {
-    globalThis.__babySonovueSchemaPromise = ensureDatabaseSchema(globalThis.__babySonovueDatabase);
+  if (
+    !globalThis.__babySonovueSchemaPromise ||
+    globalThis.__babySonovueSchemaVersion !== SCHEMA_VERSION
+  ) {
+    globalThis.__babySonovueSchemaVersion = SCHEMA_VERSION;
+    globalThis.__babySonovueSchemaPromise = ensureDatabaseSchema(
+      globalThis.__babySonovueDatabase,
+    ).catch((error) => {
+      globalThis.__babySonovueSchemaPromise = undefined;
+      globalThis.__babySonovueSchemaVersion = undefined;
+      throw error;
+    });
   }
 
   await globalThis.__babySonovueSchemaPromise;

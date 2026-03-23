@@ -6,15 +6,20 @@ import Tabs, { TabItem } from "@/components/Tabs";
 import Accordion from "@/components/Accordion";
 import { bloodScreeningContent, type BloodScreeningGroup } from "@/content/bloodScreening";
 import { clinicUltrasoundScansContent } from "@/content/clinicUltrasoundScans";
+import { getResolvedBloodScreeningGroups } from "@/lib/package-catalog";
 
-const { hero, groups, preparation, faqs } = bloodScreeningContent;
+const { hero, groups: staticGroups, preparation, faqs } = bloodScreeningContent;
 const { site, brand } = clinicUltrasoundScansContent;
-const typedGroups = groups as readonly BloodScreeningGroup[];
-const packageGroups = typedGroups.filter((group) =>
-  group.cards.some((card) => (card.kind ?? "info") === "package"),
+const typedGroups = staticGroups as readonly BloodScreeningGroup[];
+const packageGroupIds = new Set(
+  typedGroups
+    .filter((group) => group.cards.some((card) => (card.kind ?? "info") === "package"))
+    .map((group) => group.id),
 );
-const informationGroups = typedGroups.filter((group) =>
-  group.cards.every((card) => (card.kind ?? "info") !== "package"),
+const informationGroupIds = new Set(
+  typedGroups
+    .filter((group) => group.cards.every((card) => (card.kind ?? "info") !== "package"))
+    .map((group) => group.id),
 );
 const informationCallouts = typedGroups
   .filter((group) => group.callout)
@@ -44,14 +49,24 @@ const faqItems = faqs.map((faq, index) => ({
   content: <p>{faq.answer}</p>,
 }));
 
-const tabItems: TabItem[] = packageGroups.map((group) => ({
-  id: group.id,
-  label: group.title,
-  description: group.description,
-  content: <BloodScreeningGroupPanel group={group} />,
-}));
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
-export default function BloodScreeningPage() {
+export default async function BloodScreeningPage() {
+  const groups = await getResolvedBloodScreeningGroups();
+  const packageGroups = groups.filter(
+    (group) =>
+      packageGroupIds.has(group.id) &&
+      group.cards.some((card) => (card.kind ?? "info") === "package"),
+  );
+  const informationGroups = groups.filter((group) => informationGroupIds.has(group.id));
+  const tabItems: TabItem[] = packageGroups.map((group) => ({
+    id: group.id,
+    label: group.title,
+    description: group.description,
+    content: <BloodScreeningGroupPanel group={group} />,
+  }));
+
   return (
     <div className="pb-24">
       <section className="mx-auto max-w-6xl px-4 pb-10">

@@ -1,4 +1,7 @@
-import type { PackageGroup } from "@/content/clinicUltrasoundScans";
+import {
+  clinicUltrasoundScansContent,
+  type PackageGroup,
+} from "@/content/clinicUltrasoundScans";
 
 export type HomeScansCompareItem = {
   label: string;
@@ -34,6 +37,77 @@ const compareItems: HomeScansCompareItem[] = [
   },
 ];
 
+const HOME_SCAN_MULTIPLIER = 5 / 3;
+
+function parsePriceLabel(priceLabel: string) {
+  const parsed = Number.parseFloat(priceLabel.replace(/[^0-9.]/g, ""));
+
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`Unable to parse clinic price label: ${priceLabel}`);
+  }
+
+  return parsed;
+}
+
+function formatPrice(value: number) {
+  const rounded = Math.ceil(value);
+
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(rounded);
+}
+
+function getClinicPackagePrice(groupId: string, packageId: string) {
+  const clinicGroup = clinicUltrasoundScansContent.groups.find((group) => group.id === groupId);
+  const clinicPackage = clinicGroup?.packages.find((packageItem) => packageItem.id === packageId);
+
+  if (!clinicPackage || !("price" in clinicPackage) || !clinicPackage.price) {
+    throw new Error(`Missing clinic price for ${groupId}/${packageId}`);
+  }
+
+  return clinicPackage.price;
+}
+
+function getClinicPricingOptionPrice(groupId: string, packageId: string, optionLabel: string) {
+  const clinicGroup = clinicUltrasoundScansContent.groups.find((group) => group.id === groupId);
+  const clinicPackage = clinicGroup?.packages.find((packageItem) => packageItem.id === packageId);
+
+  if (!clinicPackage || !("pricingOptions" in clinicPackage) || !clinicPackage.pricingOptions?.length) {
+    throw new Error(`Missing clinic pricing options for ${groupId}/${packageId}`);
+  }
+
+  const pricingOption = clinicPackage.pricingOptions.find((option) => option.label === optionLabel);
+  if (!pricingOption) {
+    throw new Error(`Missing clinic pricing option ${optionLabel} for ${groupId}/${packageId}`);
+  }
+
+  return pricingOption.price;
+}
+
+function getHomePriceFromClinicPackage(groupId: string, packageId: string) {
+  return formatPrice(parsePriceLabel(getClinicPackagePrice(groupId, packageId)) * HOME_SCAN_MULTIPLIER);
+}
+
+function getHomePriceFromClinicOption(groupId: string, packageId: string, optionLabel: string) {
+  return formatPrice(
+    parsePriceLabel(getClinicPricingOptionPrice(groupId, packageId, optionLabel)) * HOME_SCAN_MULTIPLIER,
+  );
+}
+
+const clinicAnatomyGenderPrice = parsePriceLabel(
+  getClinicPricingOptionPrice("anatomy", "package-j", "Anatomy plus Gender"),
+);
+const clinicAnatomyGender4dPrice = parsePriceLabel(
+  getClinicPricingOptionPrice("anatomy", "package-j", "Anatomy plus Gender plus 4D"),
+);
+// The clinic data does not expose a separate anatomy+gender+3D tier, so infer it halfway between
+// the clinic gender tier and the clinic gender+4D tier to keep the home pricing ladder consistent.
+const inferredClinicAnatomyGender3dPrice =
+  clinicAnatomyGenderPrice + (clinicAnatomyGender4dPrice - clinicAnatomyGenderPrice) / 2;
+
 const groups: PackageGroup[] = [
   {
     id: "early-reassurance-home",
@@ -44,7 +118,7 @@ const groups: PackageGroup[] = [
     packages: [
       {
         id: "home-early-reassurance",
-        name: "Meet & Bond with Baby@ Early Reassurance Scan",
+        name: "Meet & Bond Early Reassurance Scan (7-16 weeks)",
         weeks: "7-16 weeks",
         scanFor:
           "A home-based reassurance scan to check viability, confirm the pregnancy is in the womb, and support early pregnancy dating.",
@@ -56,6 +130,7 @@ const groups: PackageGroup[] = [
           "Estimate gestational age and expected date of delivery (EDD)",
           "Use head circumference for dating if the CRL is above 84mm",
         ],
+        price: getHomePriceFromClinicPackage("2d-wellbeing", "package-a"),
         notes: [
           "The earlier the dating scan, the more accurate the dating tends to be.",
           "Designed to reassure that the pregnancy is progressing as expected.",
@@ -72,7 +147,7 @@ const groups: PackageGroup[] = [
     packages: [
       {
         id: "home-wellbeing",
-        name: "Wellbeing Scan",
+        name: "Wellbeing Scan (16-40 weeks)",
         weeks: "16-40 weeks",
         scanFor:
           "A standard home wellbeing scan focused on core pregnancy observations.",
@@ -83,13 +158,14 @@ const groups: PackageGroup[] = [
           "Check the position of the placenta",
           "Check the amniotic fluid volume",
         ],
+        price: getHomePriceFromClinicPackage("observation-growth", "package-c"),
         notes: [
           "Wellbeing observations are carried out as standard across the scan range.",
         ],
       },
       {
         id: "home-growth",
-        name: "Growth Scan",
+        name: "Growth Scan (14-40 weeks)",
         weeks: "14-40 weeks",
         scanFor:
           "Growth scans can be requested from early in pregnancy depending on your circumstances and preference.",
@@ -104,6 +180,7 @@ const groups: PackageGroup[] = [
           "Growth and development overview",
           "Head, abdomen, and femur measurements",
         ],
+        price: getHomePriceFromClinicPackage("observation-growth", "package-d"),
         notes: [
           "Some parents request early growth scans because of medical history, BMI, diabetes, blood pressure, kidney conditions, medication, or personal reassurance needs.",
           "Growth scans can be requested from as early as 14 weeks depending on preference.",
@@ -120,7 +197,7 @@ const groups: PackageGroup[] = [
     packages: [
       {
         id: "home-gender",
-        name: "Gender Scan",
+        name: "Gender Scan (16-40 weeks)",
         weeks: "16-40 weeks",
         scanFor:
           "A home visit gender scan for parents who want to find out baby's sex for personal planning or a reveal moment.",
@@ -130,6 +207,7 @@ const groups: PackageGroup[] = [
           "Repeat baby measurements where appropriate",
           "Secret gender option via scratch card if you do not want to know on the day",
         ],
+        price: getHomePriceFromClinicPackage("gender", "package-e"),
         notes: [
           "Gender confirmation depends on baby's position at the time of the scan.",
           "If you want to know baby's sex earlier, a Baby Gender DNA Test is available from 6 weeks with a positive pregnancy test.",
@@ -137,7 +215,7 @@ const groups: PackageGroup[] = [
       },
       {
         id: "home-4d",
-        name: "3D / 4D Bonding Scan",
+        name: "3D / 4D Bonding Scan (24-32 weeks)",
         weeks: "24-32 weeks",
         scanFor:
           "A home-based bonding scan intended to capture clearer facial features and movement later in pregnancy.",
@@ -147,6 +225,7 @@ const groups: PackageGroup[] = [
           "Opportunity to see facial features more clearly",
           "May capture blinking and movement in real time",
         ],
+        price: getHomePriceFromClinicPackage("4d", "package-g"),
         notes: [
           "After 32 weeks, baby may move lower into the pelvis and become harder to visualise clearly.",
         ],
@@ -162,7 +241,7 @@ const groups: PackageGroup[] = [
     packages: [
       {
         id: "home-second-opinion",
-        name: "Second Opinion Scan",
+        name: "Second Opinion Scan (7-40 weeks)",
         weeks: "7-40 weeks",
         scanFor:
           "A second opinion carried out at home or in clinic, with time to explain findings carefully and answer questions.",
@@ -172,6 +251,7 @@ const groups: PackageGroup[] = [
           "Second opinion support for matters such as no heartbeat, Trisomy 13, Trisomy 18, Trisomy 21, and Spina Bifida",
           "Keepsake imagery can also be captured during the scan",
         ],
+        price: getHomePriceFromClinicPackage("second-opinion", "package-i"),
         notes: [
           "Please bring the original ultrasound report with you.",
           "Available in clinic or in the comfort of your own home.",
@@ -188,7 +268,7 @@ const groups: PackageGroup[] = [
     packages: [
       {
         id: "home-anatomy",
-        name: "Wellbeing plus Anatomy Scan",
+        name: "Wellbeing plus Anatomy Scan (18-24 weeks)",
         weeks: "18-24 weeks",
         scanFor:
           "A home-based anatomy review intended to walk you through what can be seen, not to replace a medical anomaly scan.",
@@ -199,10 +279,22 @@ const groups: PackageGroup[] = [
           "What can be shown depends on baby's position, BMI, technical limitations, and other constraints",
         ],
         pricingOptions: [
-          { label: "Anatomy scan", price: "£199" },
-          { label: "Anatomy plus Gender", price: "£209" },
-          { label: "Anatomy plus Gender plus 3D", price: "£229" },
-          { label: "Anatomy plus Gender plus 3D plus 4D", price: "£259" },
+          {
+            label: "Anatomy scan",
+            price: getHomePriceFromClinicOption("anatomy", "package-j", "Anatomy scan"),
+          },
+          {
+            label: "Anatomy plus Gender",
+            price: getHomePriceFromClinicOption("anatomy", "package-j", "Anatomy plus Gender"),
+          },
+          {
+            label: "Anatomy plus Gender plus 3D",
+            price: formatPrice(inferredClinicAnatomyGender3dPrice * HOME_SCAN_MULTIPLIER),
+          },
+          {
+            label: "Anatomy plus Gender plus 3D plus 4D",
+            price: getHomePriceFromClinicOption("anatomy", "package-j", "Anatomy plus Gender plus 4D"),
+          },
         ],
         notes: [
           "This is an anatomy scan, not an anomaly scan.",
@@ -249,7 +341,7 @@ export const homeScansContent = {
   packagesSection: {
     title: "Pregnancy Scan Types Explained",
     description:
-      "Each home-based scan route is outlined below so you can compare what is included and choose the right option for you.",
+      "Each home-based scan route is outlined below so you can compare what is included and choose the right option for you. Home-scan pricing is calculated as the clinic price plus two-thirds of the clinic price, then rounded up to the nearest whole pound.",
   },
   groups,
   whatToExpect: {
@@ -317,6 +409,11 @@ export const homeScansContent = {
       question: "When can I have an early reassurance scan?",
       answer:
         "The early Meet & Bond with Baby route is generally used from 7 to 16 weeks, with the earliest dating scans tending to be the most accurate.",
+    },
+    {
+      question: "How are home scan prices calculated?",
+      answer:
+        "Home scan pricing is calculated from the clinic price. The home price is the clinic price plus two-thirds of the clinic price, then rounded up to the nearest whole pound. For example, a clinic scan priced at £90 becomes £150 for a home visit.",
     },
     {
       question: "When can I have a gender scan or 3D/4D scan?",

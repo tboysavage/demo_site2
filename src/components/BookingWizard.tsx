@@ -5,9 +5,8 @@ import { Suspense, type FormEvent, type ReactNode, useEffect, useMemo, useState 
 import { useSearchParams } from "next/navigation";
 import { clinicUltrasoundScansContent } from "@/content/clinicUltrasoundScans";
 import {
-  bookingLocations,
-  scanBookingOptions,
   type BookingOption,
+  type BookingLocation,
   type BookingService,
 } from "@/content/scanBooking";
 
@@ -236,7 +235,17 @@ function BookingOptionCard({
   );
 }
 
-function BookingWizardBody() {
+function BookingWizardBody({
+  depositAmountLabel,
+  bookingEnabled,
+  bookingOptions,
+  bookingLocations,
+}: {
+  depositAmountLabel: string;
+  bookingEnabled: boolean;
+  bookingOptions: readonly BookingOption[];
+  bookingLocations: readonly BookingLocation[];
+}) {
   const searchParams = useSearchParams();
   const requestedPackage = searchParams.get("package");
   const requestedService = searchParams.get("service");
@@ -262,7 +271,7 @@ function BookingWizardBody() {
 
   useEffect(() => {
     if (requestedPackage) {
-      const matchedOption = scanBookingOptions.find((option) => option.id === requestedPackage);
+      const matchedOption = bookingOptions.find((option) => option.id === requestedPackage);
       if (matchedOption) {
         setService(matchedOption.service);
         setSelectedPackageId(matchedOption.id);
@@ -281,19 +290,19 @@ function BookingWizardBody() {
   }, [requestedPackage, requestedService]);
 
   const filteredOptions = useMemo(
-    () => scanBookingOptions.filter((option) => option.service === service),
-    [service],
+    () => bookingOptions.filter((option) => option.service === service),
+    [bookingOptions, service],
   );
 
   const selectedOption = useMemo(
-    () => scanBookingOptions.find((option) => option.id === selectedPackageId),
-    [selectedPackageId],
+    () => bookingOptions.find((option) => option.id === selectedPackageId),
+    [bookingOptions, selectedPackageId],
   );
   const isBloodService = selectedOption?.service === "blood";
 
   const availableLocations = useMemo(
     () => bookingLocations.filter((location) => location.service === service),
-    [service],
+    [bookingLocations, service],
   );
 
   const selectedLocation = useMemo(
@@ -475,6 +484,13 @@ function BookingWizardBody() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitError("");
+
+    if (!bookingEnabled) {
+      setSubmitError(
+        "Local checkout is disabled because the booking database is not configured for this environment.",
+      );
+      return;
+    }
 
     const nextDetailErrors = validateDetails();
     setDetailErrors(nextDetailErrors);
@@ -1058,7 +1074,12 @@ function BookingWizardBody() {
                 <p>{selectedOption?.title}</p>
                 <p>{selectedOption?.serviceLabel}</p>
                 <p>{selectedOption?.weeks}</p>
-                {selectedOption?.priceLabel ? <p>{selectedOption.priceLabel}</p> : null}
+                {selectedOption?.priceLabel ? (
+                  <p>
+                    <span className="font-semibold text-slate-900">Full package price:</span>{" "}
+                    {selectedOption.priceLabel}
+                  </p>
+                ) : null}
               </div>
             </div>
             <div className="rounded-3xl border border-slate-200 bg-white p-5">
@@ -1102,6 +1123,20 @@ function BookingWizardBody() {
                 </p>
               </div>
             </div>
+            <div className="rounded-3xl border border-[var(--baby-blue)] bg-[var(--baby-blue)]/20 p-5">
+              <p className="text-sm font-semibold text-slate-900">Stripe checkout today</p>
+              <div className="mt-3 space-y-2 text-sm text-slate-700">
+                <p className="text-lg font-semibold text-slate-900">{depositAmountLabel} deposit only</p>
+                <p>
+                  Stripe will only collect the deposit at this stage. The full package price is not
+                  charged in checkout today.
+                </p>
+                <p>
+                  The clinic team still confirms the final appointment slot by phone or email after
+                  payment.
+                </p>
+              </div>
+            </div>
           </div>
 
           <label className="flex items-start gap-3 rounded-3xl border border-slate-200 bg-[var(--accent-soft)] p-5 text-sm text-slate-700">
@@ -1115,8 +1150,9 @@ function BookingWizardBody() {
               className="mt-1 h-4 w-4 rounded border-slate-300"
             />
             <span>
-              I understand that the next step takes me to Stripe to pay the booking deposit, and that{" "}
-              {brand.name} will still confirm the final appointment slot by phone or email.
+              I understand that the next step takes me to Stripe to pay only the{" "}
+              {depositAmountLabel} deposit, and that {brand.name} will still confirm the final
+              appointment slot by phone or email.
             </span>
           </label>
 
@@ -1132,6 +1168,12 @@ function BookingWizardBody() {
             </p>
           ) : null}
 
+          {!bookingEnabled ? (
+            <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+              Stripe checkout is disabled locally until the booking database is configured.
+            </p>
+          ) : null}
+
           <div className="flex flex-wrap items-center justify-between gap-3">
             <button
               type="button"
@@ -1142,10 +1184,10 @@ function BookingWizardBody() {
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !bookingEnabled}
               className="rounded-full bg-[var(--accent-strong)] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[var(--ink-strong)] disabled:cursor-not-allowed disabled:bg-slate-400"
             >
-              {isSubmitting ? "Redirecting to Stripe..." : "Continue to secure deposit"}
+              {isSubmitting ? "Redirecting to Stripe..." : `Pay ${depositAmountLabel} deposit in Stripe`}
             </button>
           </div>
 
@@ -1172,10 +1214,25 @@ function BookingWizardFallback() {
   );
 }
 
-export default function BookingWizard() {
+export default function BookingWizard({
+  depositAmountLabel,
+  bookingEnabled,
+  bookingOptions,
+  bookingLocations,
+}: {
+  depositAmountLabel: string;
+  bookingEnabled: boolean;
+  bookingOptions: readonly BookingOption[];
+  bookingLocations: readonly BookingLocation[];
+}) {
   return (
     <Suspense fallback={<BookingWizardFallback />}>
-      <BookingWizardBody />
+      <BookingWizardBody
+        depositAmountLabel={depositAmountLabel}
+        bookingEnabled={bookingEnabled}
+        bookingOptions={bookingOptions}
+        bookingLocations={bookingLocations}
+      />
     </Suspense>
   );
 }

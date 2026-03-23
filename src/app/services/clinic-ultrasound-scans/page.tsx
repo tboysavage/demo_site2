@@ -6,11 +6,11 @@ import PackageGroupPanel from "@/components/PackageGroupPanel";
 import SectionHeading from "@/components/SectionHeading";
 import Accordion from "@/components/Accordion";
 import { clinicUltrasoundScansContent } from "@/content/clinicUltrasoundScans";
+import { getResolvedClinicPackageGroups } from "@/lib/package-catalog";
 
 const {
   hero,
   compare,
-  groups,
   whatToExpect,
   trust,
   faqs,
@@ -42,20 +42,24 @@ export const metadata: Metadata = {
   },
 };
 
-const tabItems: TabItem[] = groups.map((group) => ({
-  id: group.id,
-  label: group.title,
-  description: `${group.weeks}`,
-  content: <PackageGroupPanel group={group} />,
-}));
-
 const faqItems = faqs.map((faq, index) => ({
   id: `faq-${index}`,
   title: faq.question,
   content: <p>{faq.answer}</p>,
 }));
 
-export default function ClinicUltrasoundScansPage() {
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+
+export default async function ClinicUltrasoundScansPage() {
+  const groups = await getResolvedClinicPackageGroups();
+  const tabItems: TabItem[] = groups.map((group) => ({
+    id: group.id,
+    label: group.title,
+    description: `${group.weeks}`,
+    content: <PackageGroupPanel group={group} />,
+  }));
+
   const schema = {
     "@context": "https://schema.org",
     "@type": "MedicalClinic",

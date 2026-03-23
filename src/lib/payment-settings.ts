@@ -3,13 +3,16 @@ import {
   DEFAULT_CURRENCY,
   formatCurrencyFromPence,
 } from "@/lib/booking-config";
-import { getDatabase } from "@/lib/database";
+import { getDatabase, hasDatabaseConfig } from "@/lib/database";
 
 const DEPOSIT_AMOUNT_KEY = "booking_deposit_amount_pence";
+export const MIN_BOOKING_DEPOSIT_AMOUNT_PENCE = 500;
+export const MAX_BOOKING_DEPOSIT_AMOUNT_PENCE = 50000;
 
 type StripeKeyStatus = {
   configured: boolean;
-  maskedValue: string;
+  label: string;
+  mode: "test" | "live" | "unknown";
 };
 
 export type PaymentSettings = {
@@ -40,26 +43,52 @@ function getEnvDepositAmountPence() {
   return parsePositiveInteger(process.env.BOOKING_DEPOSIT_AMOUNT_PENCE) ?? DEFAULT_DEPOSIT_AMOUNT_PENCE;
 }
 
-function maskValue(rawValue: string | undefined) {
+function getStripeMode(rawValue: string | undefined): "test" | "live" | "unknown" {
+  if (!rawValue) {
+    return "unknown";
+  }
+
+  if (rawValue.includes("_test_")) {
+    return "test";
+  }
+
+  if (rawValue.includes("_live_")) {
+    return "live";
+  }
+
+  return "unknown";
+}
+
+function getStripeLabel(rawValue: string | undefined) {
   if (!rawValue) {
     return "Not configured";
   }
 
-  if (rawValue.length <= 12) {
-    return "Configured";
+  const mode = getStripeMode(rawValue);
+  if (mode === "test") {
+    return "Configured (test mode)";
   }
 
-  return `${rawValue.slice(0, 8)}...${rawValue.slice(-4)}`;
+  if (mode === "live") {
+    return "Configured (live mode)";
+  }
+
+  return "Configured";
 }
 
 function getStripeKeyStatus(rawValue: string | undefined): StripeKeyStatus {
   return {
     configured: Boolean(rawValue),
-    maskedValue: maskValue(rawValue),
+    label: getStripeLabel(rawValue),
+    mode: getStripeMode(rawValue),
   };
 }
 
 export async function getConfiguredDepositAmountPence() {
+  if (!hasDatabaseConfig()) {
+    return getEnvDepositAmountPence();
+  }
+
   const sql = await getDatabase();
   const rows = await sql<{ value: string }[]>`
     SELECT value
