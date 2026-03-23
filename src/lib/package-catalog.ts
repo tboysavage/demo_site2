@@ -75,6 +75,7 @@ type ManagedPackageMutationInput = {
 type BaseClinicPackage = Package;
 type BaseClinicGroup = (typeof clinicUltrasoundScansContent.groups)[number];
 type BaseHomeGroup = (typeof homeScansContent.groups)[number];
+const typedBloodGroups = bloodScreeningContent.groups as readonly BloodScreeningGroup[];
 
 function nowIso() {
   return new Date().toISOString();
@@ -183,7 +184,11 @@ const homeGroupDefinitions: ManagedPackageGroupDefinition[] = homeScansContent.g
   weeks: group.weeks,
 }));
 
-const bloodGroupDefinitions: ManagedPackageGroupDefinition[] = bloodScreeningContent.groups
+function isPackageBloodCard(card: BloodScreeningCard) {
+  return (card.kind ?? "info") === "package";
+}
+
+const bloodGroupDefinitions: ManagedPackageGroupDefinition[] = typedBloodGroups
   .filter((group) => group.cards.some((card) => (card.kind ?? "info") === "package"))
   .map((group) => ({
     service: "blood",
@@ -254,9 +259,9 @@ function getBaseHomePackages() {
 function getBaseBloodPackages() {
   const timestamp = nowIso();
 
-  return bloodScreeningContent.groups.flatMap((group, groupIndex) =>
+  return typedBloodGroups.flatMap((group, groupIndex) =>
     group.cards
-      .filter((card) => (card.kind ?? "info") === "package")
+      .filter(isPackageBloodCard)
       .map((card, packageIndex) => ({
         packageId: card.id,
         service: "blood" as const,
@@ -395,7 +400,7 @@ function toClinicPackage(packageItem: ManagedPackageRecord): Package {
 }
 
 function toBloodPackageCard(packageItem: ManagedPackageRecord): BloodScreeningCard {
-  const baseCard = bloodScreeningContent.groups
+  const baseCard = typedBloodGroups
     .flatMap((group) => group.cards)
     .find((card) => card.id === packageItem.packageId);
 
@@ -453,13 +458,13 @@ export async function getResolvedBloodScreeningGroups() {
   const packages = await listManagedPackages();
   const bloodPackages = getPackagesForService(packages, "blood");
 
-  return bloodScreeningContent.groups.map<BloodScreeningGroup>((group) => {
+  return typedBloodGroups.map<BloodScreeningGroup>((group) => {
     const hasPackageCards = group.cards.some((card) => (card.kind ?? "info") === "package");
     if (!hasPackageCards) {
       return group;
     }
 
-    const infoCards = group.cards.filter((card) => (card.kind ?? "info") !== "package");
+    const infoCards = group.cards.filter((card) => !isPackageBloodCard(card));
     const packageCards = bloodPackages
       .filter((packageItem) => packageItem.groupId === group.id)
       .sort((left, right) => left.sortOrder - right.sortOrder)
