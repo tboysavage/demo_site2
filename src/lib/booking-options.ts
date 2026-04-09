@@ -60,6 +60,7 @@ function mapGroup(service: BookingService, serviceLabel: string, group: BookingG
     title: packageItem.name,
     weeks: packageItem.weeks,
     priceLabel: getPriceLabel(packageItem),
+    pricingOptions: packageItem.pricingOptions,
     summary: packageItem.scanFor ?? group.description,
     includes: packageItem.includes,
   }));

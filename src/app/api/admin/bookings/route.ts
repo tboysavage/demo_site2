@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { bookingLocations } from "@/content/scanBooking";
+import { bookingLocations, isLocationDateAvailable } from "@/content/scanBooking";
 import { getAdminBookingByReference, addAdminActivityLog } from "@/lib/admin-data";
 import { getAdminSession } from "@/lib/admin-auth";
 import { getClinicTodayDate } from "@/lib/clinic-time";
@@ -91,7 +91,11 @@ export async function POST(request: Request) {
     const location = bookingLocations.find(
       (item) => item.id === locationId && item.service === booking.service,
     );
-    if (!location || !location.timeSlots.includes(appointmentTime)) {
+    if (
+      !location ||
+      !location.timeSlots.includes(appointmentTime) ||
+      !isLocationDateAvailable(location, appointmentDate)
+    ) {
       return redirectWithStatus(request, "booking-reschedule-slot");
     }
 

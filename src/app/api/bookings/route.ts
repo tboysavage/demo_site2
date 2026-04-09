@@ -8,7 +8,7 @@ import {
   updateBookingPaymentState,
 } from "@/lib/booking-db";
 import { createDepositCheckoutSession } from "@/lib/stripe";
-import { bookingLocations } from "@/content/scanBooking";
+import { bookingLocations, isLocationDateAvailable } from "@/content/scanBooking";
 import { getScanBookingOptions } from "@/lib/booking-options";
 import { checkRateLimit, getRequestIpAddress } from "@/lib/rate-limit";
 import { getAdminBookingByReference } from "@/lib/admin-data";
@@ -28,6 +28,7 @@ type BookingRequestBody = {
   package?: {
     id?: string;
     title?: string;
+    pricingOptionLabel?: string | null;
     group?: string;
     service?: string;
     weeks?: string;
@@ -304,6 +305,7 @@ export async function POST(request: Request) {
   const packageData: {
     id: string;
     title: string;
+    pricingOptionLabel: string | null;
     group: string;
     service: string;
     weeks: string;
@@ -311,6 +313,7 @@ export async function POST(request: Request) {
   } = {
     id: payload.package.id,
     title: payload.package.title,
+    pricingOptionLabel: payload.package.pricingOptionLabel ?? null,
     group: payload.package.group,
     service: payload.package.service,
     weeks: payload.package.weeks,
@@ -322,14 +325,32 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Selected package is not recognised." }, { status: 400 });
   }
 
+  const matchedPricingOption = packageData.pricingOptionLabel
+    ? matchedOption.pricingOptions?.find(
+        (pricingOption) => pricingOption.label === packageData.pricingOptionLabel,
+      ) ?? null
+    : null;
+
+  if (packageData.pricingOptionLabel && !matchedPricingOption) {
+    return NextResponse.json(
+      { error: "The selected pricing option is not recognised for this package." },
+      { status: 400 },
+    );
+  }
+
+  const expectedPackageTitle = matchedPricingOption
+    ? `${matchedOption.title} - ${matchedPricingOption.label}`
+    : matchedOption.title;
+  const expectedPackagePrice = matchedPricingOption?.price ?? matchedOption.priceLabel ?? null;
+
   if (
     matchedOption.service !== payload.requestedService ||
     matchedOption.groupId !== payload.requestedPackageGroupId ||
     matchedOption.groupTitle !== packageData.group ||
     matchedOption.serviceLabel !== packageData.service ||
-    matchedOption.title !== packageData.title ||
+    expectedPackageTitle !== packageData.title ||
     matchedOption.weeks !== packageData.weeks ||
-    (matchedOption.priceLabel ?? null) !== (packageData.price ?? null)
+    expectedPackagePrice !== (packageData.price ?? null)
   ) {
     return NextResponse.json(
       { error: "Booking package data does not match the selected option." },
@@ -359,6 +380,13 @@ export async function POST(request: Request) {
   if (payload.appointment.preferredDate < getTomorrowValue()) {
     return NextResponse.json(
       { error: "Choose a preferred appointment date from tomorrow onwards." },
+      { status: 400 },
+    );
+  }
+
+  if (!isLocationDateAvailable(matchedLocation, payload.appointment.preferredDate)) {
+    return NextResponse.json(
+      { error: `${matchedLocation.label} appointments are available Monday to Friday only.` },
       { status: 400 },
     );
   }

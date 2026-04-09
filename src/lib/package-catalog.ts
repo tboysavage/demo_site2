@@ -287,6 +287,53 @@ function getBaseManagedPackages() {
   return [...getBaseClinicPackages(), ...getBaseHomePackages(), ...getBaseBloodPackages()];
 }
 
+async function applyManagedPackageCorrections(sql: Awaited<ReturnType<typeof getDatabase>>) {
+  await sql`
+    UPDATE managed_packages
+    SET
+      price_label = '£119.00',
+      updated_at = ${nowIso()}
+    WHERE package_id = 'package-b'
+      AND (price_label IS NULL OR price_label = '£109.00')
+  `;
+
+  await sql`
+    UPDATE managed_packages
+    SET
+      title = 'Male Fetility Testosterone Package (A total of 10 tests)',
+      updated_at = ${nowIso()}
+    WHERE package_id = 'testosterone-package'
+      AND title <> 'Male Fetility Testosterone Package (A total of 10 tests)'
+  `;
+
+  await sql`
+    UPDATE managed_packages
+    SET
+      includes_json = ${serializeJsonArray([
+        "We will perform blood pressure and blood glucose measurements",
+        "We will measure your weight",
+        "We will measure your height",
+        "We will calculate your BMI",
+        "We will perform a lancet blood glucose test",
+        "We will perform a urine dip test",
+        "We will give you an electronic report of the measurements",
+        "We do not interpret results — you can show them to your health carer.",
+      ])},
+      updated_at = ${nowIso()}
+    WHERE package_id = 'men-bp-diabetes'
+      AND includes_json <> ${serializeJsonArray([
+        "We will perform blood pressure and blood glucose measurements",
+        "We will measure your weight",
+        "We will measure your height",
+        "We will calculate your BMI",
+        "We will perform a lancet blood glucose test",
+        "We will perform a urine dip test",
+        "We will give you an electronic report of the measurements",
+        "We do not interpret results — you can show them to your health carer.",
+      ])}
+  `;
+}
+
 async function ensureManagedPackageSeed() {
   if (!hasDatabaseConfig()) {
     return;
@@ -342,6 +389,8 @@ async function ensureManagedPackageSeed() {
       )
     `;
   }
+
+  await applyManagedPackageCorrections(sql);
 }
 
 export function listManagedPackageGroups() {
@@ -362,6 +411,7 @@ export async function listManagedPackages() {
 
   await ensureManagedPackageSeed();
   const sql = await getDatabase();
+  await applyManagedPackageCorrections(sql);
   const rows = await sql<ManagedPackageRow[]>`
     SELECT
       package_id,

@@ -73,7 +73,7 @@ export const clinicUltrasoundScansContent = {
         { label: "Gallery", href: "#" },
         { label: "Contact Us", href: "/contact" },
       ],
-    bookButtonLabel: "Book a Meeting",
+    bookButtonLabel: "Book a Meet&Bond Scan",
     },
   ui: {
     labels: {
@@ -293,7 +293,7 @@ export const clinicUltrasoundScansContent = {
             "Provide Imagery on Your Dedicated Email",
             "3x Digital Photo",
           ],
-          price: "£109.00",
+          price: "£119.00",
         },
       ],
     },

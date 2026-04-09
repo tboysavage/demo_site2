@@ -5,6 +5,8 @@ import { Suspense, type FormEvent, type ReactNode, useEffect, useMemo, useState 
 import { useSearchParams } from "next/navigation";
 import { clinicUltrasoundScansContent } from "@/content/clinicUltrasoundScans";
 import {
+  getLocationAvailabilitySummary,
+  isLocationDateAvailable,
   type BookingOption,
   type BookingLocation,
   type BookingService,
@@ -175,6 +177,32 @@ function getPreferredLocationId(
   return locations[0]?.id ?? "";
 }
 
+function getSelectedPackageTitle(
+  option: BookingOption | undefined,
+  pricingOptionLabel?: string,
+) {
+  if (!option) {
+    return "";
+  }
+
+  return pricingOptionLabel ? `${option.title} - ${pricingOptionLabel}` : option.title;
+}
+
+function getSelectedPackagePriceLabel(
+  option: BookingOption | undefined,
+  pricingOptionLabel?: string,
+) {
+  if (!option) {
+    return undefined;
+  }
+
+  if (!pricingOptionLabel) {
+    return option.priceLabel;
+  }
+
+  return option.pricingOptions?.find((pricingOption) => pricingOption.label === pricingOptionLabel)?.price;
+}
+
 function StepPanel({
   step,
   title,
@@ -271,10 +299,12 @@ function BookingWizardBody({
 }) {
   const searchParams = useSearchParams();
   const requestedPackage = searchParams.get("package");
+  const requestedPricingOption = searchParams.get("pricingOption");
   const requestedService = searchParams.get("service");
 
   const [service, setService] = useState<BookingService>("clinic");
   const [selectedPackageId, setSelectedPackageId] = useState("");
+  const [selectedPricingOptionLabel, setSelectedPricingOptionLabel] = useState("");
   const [pregnancyMode, setPregnancyMode] = useState<PregnancyMode>("due");
   const [dueDate, setDueDate] = useState("");
   const [cycleDate, setCycleDate] = useState("");
@@ -298,6 +328,10 @@ function BookingWizardBody({
       if (matchedOption) {
         setService(matchedOption.service);
         setSelectedPackageId(matchedOption.id);
+        const matchedPricingOption = matchedOption.pricingOptions?.find(
+          (option) => option.label === requestedPricingOption,
+        );
+        setSelectedPricingOptionLabel(matchedPricingOption?.label ?? "");
         setCurrentStep(2);
         return;
       }
@@ -310,7 +344,7 @@ function BookingWizardBody({
     ) {
       setService(requestedService);
     }
-  }, [requestedPackage, requestedService]);
+  }, [bookingOptions, requestedPackage, requestedPricingOption, requestedService]);
 
   const filteredOptions = useMemo(
     () => bookingOptions.filter((option) => option.service === service),
@@ -321,7 +355,23 @@ function BookingWizardBody({
     () => bookingOptions.find((option) => option.id === selectedPackageId),
     [bookingOptions, selectedPackageId],
   );
+  const selectedPricingOption = useMemo(
+    () =>
+      selectedOption?.pricingOptions?.find(
+        (pricingOption) => pricingOption.label === selectedPricingOptionLabel,
+      ) ?? null,
+    [selectedOption, selectedPricingOptionLabel],
+  );
   const isBloodService = selectedOption?.service === "blood";
+  const selectedPackageDisplayTitle = selectedOption?.title ?? "";
+  const selectedPackageTitle = getSelectedPackageTitle(
+    selectedOption,
+    selectedPricingOption?.label,
+  );
+  const selectedPackagePriceLabel = getSelectedPackagePriceLabel(
+    selectedOption,
+    selectedPricingOption?.label,
+  );
 
   const availableLocations = useMemo(
     () => bookingLocations.filter((location) => location.service === service),
@@ -379,6 +429,23 @@ function BookingWizardBody({
   }, [selectedLocation]);
 
   useEffect(() => {
+    if (!selectedOption?.pricingOptions?.length) {
+      if (selectedPricingOptionLabel) {
+        setSelectedPricingOptionLabel("");
+      }
+      return;
+    }
+
+    const hasSelectedPricingOption = selectedOption.pricingOptions.some(
+      (pricingOption) => pricingOption.label === selectedPricingOptionLabel,
+    );
+
+    if (!hasSelectedPricingOption && selectedPricingOptionLabel) {
+      setSelectedPricingOptionLabel("");
+    }
+  }, [selectedOption, selectedPricingOptionLabel]);
+
+  useEffect(() => {
     if (!availableLocations.length) {
       if (locationId) {
         setLocationId("");
@@ -400,6 +467,14 @@ function BookingWizardBody({
   useEffect(() => {
     setStepErrors((prev) => ({ ...prev, 3: undefined }));
   }, [locationId, appointmentDate, appointmentTime]);
+
+  const selectedDateAllowed = useMemo(() => {
+    if (!selectedLocation || !appointmentDate) {
+      return true;
+    }
+
+    return isLocationDateAvailable(selectedLocation, appointmentDate);
+  }, [appointmentDate, selectedLocation]);
 
   function updateDetails(field: keyof CustomerDetails, value: string) {
     setDetails((prev) => ({ ...prev, [field]: value }));
@@ -445,6 +520,11 @@ function BookingWizardBody({
     if (!locationId || !appointmentDate || !appointmentTime) {
       return "Choose a location, preferred date, and preferred time to continue.";
     }
+
+    if (selectedLocation && !isLocationDateAvailable(selectedLocation, appointmentDate)) {
+      return `${selectedLocation.label} appointments are available Monday to Friday only.`;
+    }
+
     return "";
   }
 
@@ -597,11 +677,12 @@ function BookingWizardBody({
           requestedPackageGroupId: selectedOption.groupId,
           package: {
             id: selectedOption.id,
-            title: selectedOption.title,
+            title: selectedPackageTitle,
+            pricingOptionLabel: selectedPricingOption?.label ?? null,
             group: selectedOption.groupTitle,
             service: selectedOption.serviceLabel,
             weeks: selectedOption.weeks,
-            price: selectedOption.priceLabel,
+            price: selectedPackagePriceLabel,
           },
           pregnancy: pregnancyPayload,
           appointment: {
@@ -638,7 +719,7 @@ function BookingWizardBody({
 
   const stepSummaries: Record<StepNumber, string> = {
     1: selectedOption
-      ? `${selectedOption.serviceLabel} · ${selectedOption.title}`
+      ? `${selectedOption.serviceLabel} · ${selectedPackageDisplayTitle}${selectedPricingOption ? ` · ${selectedPricingOption.label}` : ""}`
       : "Choose your clinic, home, or blood screening package",
     2: isBloodService
       ? "No pregnancy timing required for this package"
@@ -679,6 +760,7 @@ function BookingWizardBody({
                 onClick={() => {
                   setService(value);
                   setSelectedPackageId("");
+                  setSelectedPricingOptionLabel("");
                   clearLaterSteps(2);
                   setStepErrors((prev) => ({ ...prev, 1: undefined }));
                   setCurrentStep(1);
@@ -703,6 +785,7 @@ function BookingWizardBody({
                 onSelect={() => {
                   setSelectedPackageId(option.id);
                   setService(option.service);
+                  setSelectedPricingOptionLabel("");
                   clearLaterSteps(2);
                   setStepErrors((prev) => ({ ...prev, 1: undefined, 2: undefined }));
                   setCurrentStep(2);
@@ -745,14 +828,20 @@ function BookingWizardBody({
                 {selectedOption ? (
                   <div className="mt-4 space-y-3 text-sm text-slate-700">
                     <p>
-                      <span className="font-semibold text-slate-900">Package:</span> {selectedOption.title}
+                      <span className="font-semibold text-slate-900">Package:</span> {selectedPackageDisplayTitle}
                     </p>
                     <p>
                       <span className="font-semibold text-slate-900">Category:</span> {selectedOption.groupTitle}
                     </p>
-                    {selectedOption.priceLabel ? (
+                    {selectedPackagePriceLabel ? (
                       <p>
-                        <span className="font-semibold text-slate-900">Price:</span> {selectedOption.priceLabel}
+                        <span className="font-semibold text-slate-900">Price:</span> {selectedPackagePriceLabel}
+                      </p>
+                    ) : null}
+                    {selectedPricingOption ? (
+                      <p>
+                        <span className="font-semibold text-slate-900">Pricing option:</span>{" "}
+                        {selectedPricingOption.label}
                       </p>
                     ) : null}
                     <p>{selectedOption.summary}</p>
@@ -886,7 +975,7 @@ function BookingWizardBody({
                 {selectedOption ? (
                   <div className="mt-4 space-y-3 text-sm text-slate-700">
                     <p>
-                      <span className="font-semibold text-slate-900">Selected package:</span> {selectedOption.title}
+                      <span className="font-semibold text-slate-900">Selected package:</span> {selectedPackageDisplayTitle}
                     </p>
                     <p>
                       <span className="font-semibold text-slate-900">Recommended window:</span> {selectedOption.weeks}
@@ -968,6 +1057,11 @@ function BookingWizardBody({
               >
                 <p className="text-sm font-semibold text-slate-900">{location.label}</p>
                 <p className="mt-2 text-sm text-muted">{location.description}</p>
+                {getLocationAvailabilitySummary(location) ? (
+                  <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent-strong)]">
+                    {getLocationAvailabilitySummary(location)}
+                  </p>
+                ) : null}
               </button>
             ))}
           </div>
@@ -986,13 +1080,19 @@ function BookingWizardBody({
             />
           </label>
 
+          {!selectedDateAllowed && selectedLocation ? (
+            <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+              {selectedLocation.label} appointments are available Monday to Friday only.
+            </p>
+          ) : null}
+
           <div>
             <p className="text-sm font-semibold text-slate-900">Preferred appointment time</p>
             <p className="mt-1 text-sm text-muted">
               These are preferred request slots. We confirm the final appointment by phone or email.
             </p>
             <div className="mt-4 flex flex-wrap gap-3">
-              {(selectedLocation?.timeSlots ?? []).map((slot) => (
+              {(selectedDateAllowed ? selectedLocation?.timeSlots ?? [] : []).map((slot) => (
                 <button
                   key={slot}
                   type="button"
@@ -1007,6 +1107,11 @@ function BookingWizardBody({
                 </button>
               ))}
             </div>
+            {selectedLocation && selectedDateAllowed && selectedLocation.timeSlots.length ? null : selectedLocation && appointmentDate ? (
+              <p className="mt-3 text-sm text-muted">
+                Choose a valid clinic day to see the available appointment slots.
+              </p>
+            ) : null}
           </div>
 
           {stepErrors[3] ? (
@@ -1113,13 +1218,14 @@ function BookingWizardBody({
             <div className="rounded-3xl border border-slate-200 bg-white p-5">
               <p className="text-sm font-semibold text-slate-900">Selected scan</p>
               <div className="mt-3 space-y-2 text-sm text-slate-700">
-                <p>{selectedOption?.title}</p>
+                <p>{selectedPackageDisplayTitle || selectedOption?.title}</p>
+                {selectedPricingOption ? <p>{selectedPricingOption.label}</p> : null}
                 <p>{selectedOption?.serviceLabel}</p>
                 <p>{selectedOption?.weeks}</p>
-                {selectedOption?.priceLabel ? (
+                {selectedPackagePriceLabel ? (
                   <p>
                     <span className="font-semibold text-slate-900">Full package price:</span>{" "}
-                    {selectedOption.priceLabel}
+                    {selectedPackagePriceLabel}
                   </p>
                 ) : null}
               </div>

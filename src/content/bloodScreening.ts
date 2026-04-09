@@ -134,7 +134,7 @@ export const bloodScreeningContent = {
           id: "amh-package",
           kind: "package",
           title: "AMH Package (Day 2-5 of your cycle)",
-          subtitle: "For day 2 – 5 of your cycle",
+          subtitle: "Blood drawn between day 2- 5 from when your menstruation begins",
           relatedInfoIds: [
             "amh-test",
             "fbc-female",
@@ -270,7 +270,7 @@ export const bloodScreeningContent = {
         {
           id: "testosterone-package",
           kind: "package",
-          title: "Male Fertility Testosterone Package",
+          title: "Male Fetility Testosterone Package (A total of 10 tests)",
           relatedInfoIds: [
             "fbc-male",
             "prolactin-male",
@@ -622,7 +622,7 @@ export const bloodScreeningContent = {
           subtitle: "Non-Invasive Pre-eclampsia And Gestational Diabetes Health Check",
           bullets: [
             "We will measure mum’s weight",
-            "We will perform blood pressure measurements",
+            "We will perform blood pressure and blood glucose measurements",
             "We will perform a lancet blood glucose test",
             "We will perform a urine dip test",
             "We will give you an electronic report of the measurements",
@@ -638,10 +638,10 @@ export const bloodScreeningContent = {
           title: "Blood Pressure and Diabetic Test for Men",
           subtitle: "The following will be done:",
           bullets: [
+            "We will perform blood pressure and blood glucose measurements",
             "We will measure your weight",
             "We will measure your height",
             "We will calculate your BMI",
-            "We will perform blood pressure measurements",
             "We will perform a lancet blood glucose test",
             "We will perform a urine dip test",
             "We will give you an electronic report of the measurements",

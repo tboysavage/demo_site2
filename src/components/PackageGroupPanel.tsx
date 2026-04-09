@@ -58,6 +58,16 @@ function PriceBadge({ packageItem }: { packageItem: Package }) {
   return null;
 }
 
+function getBookingHref(packageItem: Package, pricingOptionLabel?: string) {
+  return {
+    pathname: "/booking",
+    query: {
+      package: packageItem.id,
+      ...(pricingOptionLabel ? { pricingOption: pricingOptionLabel } : {}),
+    },
+  };
+}
+
 function PackagePreviewCard({
   packageItem,
   selected,
@@ -106,7 +116,7 @@ function PackagePreviewCard({
           Read More
         </button>
         <Link
-          href={`/booking?package=${packageItem.id}`}
+          href={getBookingHref(packageItem)}
           className="inline-flex items-center justify-center rounded-full bg-[var(--accent-strong)] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[var(--ink-strong)]"
         >
           {ui.buttons.bookScan}
@@ -141,7 +151,7 @@ function PackageDetailsPanel({
           <div className="flex flex-wrap items-center gap-3">
             <PriceBadge packageItem={packageItem} />
             <Link
-              href={`/booking?package=${packageItem.id}`}
+              href={getBookingHref(packageItem)}
               className="inline-flex items-center justify-center rounded-full bg-[var(--accent-strong)] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[var(--ink-strong)]"
             >
               {ui.buttons.bookScan}
@@ -177,10 +187,18 @@ function PackageDetailsPanel({
               {packageItem.pricingOptions.map((option) => (
                 <div
                   key={option.label}
-                  className="flex items-center justify-between rounded-2xl bg-[var(--accent-soft)] px-4 py-2 text-sm"
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[var(--accent-soft)] px-4 py-3 text-sm"
                 >
-                  <span>{option.label}</span>
-                  <span className="font-semibold text-slate-900">{option.price}</span>
+                  <div className="min-w-0 flex-1">
+                    <p>{option.label}</p>
+                    <p className="font-semibold text-slate-900">{option.price}</p>
+                  </div>
+                  <Link
+                    href={getBookingHref(packageItem, option.label)}
+                    className="inline-flex items-center justify-center rounded-full bg-[var(--accent-strong)] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[var(--ink-strong)]"
+                  >
+                    {ui.buttons.bookScan}
+                  </Link>
                 </div>
               ))}
             </div>
