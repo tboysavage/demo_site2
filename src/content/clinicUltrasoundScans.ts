@@ -26,11 +26,11 @@ export type PackageGroup = {
 export const clinicUltrasoundScansContent = {
   brand: {
     name: "Baby Sonovue LTD",
-    address: "1B Clive Road, Fratton, PO1 5JB",
-    postalCode: "PO1 5JB",
+    address: "24 St Edmunds Church Street, SP1 1EF",
+    postalCode: "SP1 1EF",
     countryCode: "GB",
     phone: "07737493979",
-    email: "vbnesh@gmail.com",
+    email: "info@babysonovue.com",
     socials: [
       { label: "Facebook", href: "#" },
       { label: "Instagram", href: "#" },
@@ -49,9 +49,9 @@ export const clinicUltrasoundScansContent = {
     clinicOgDescription:
       "Meet & Bond With Baby@ with clear reports, keepsake imagery, and expert reassurance.",
     serviceType: "Pregnancy ultrasound scans",
-    areaServed: "Portsmouth",
+    areaServed: "Salisbury",
     priceRange: "£99-£169",
-    addressLocality: "Portsmouth",
+    addressLocality: "Salisbury",
   },
   images: {
     heroAlt: "Clinic ultrasound scan",

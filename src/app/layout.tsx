@@ -24,6 +24,11 @@ export const metadata: Metadata = {
     template: `%s | ${brand.name}`,
   },
   description: seo.defaultDescription,
+  icons: {
+    icon: "/site-icon.png",
+    shortcut: "/site-icon.png",
+    apple: "/site-icon.png",
+  },
 };
 
 export default function RootLayout({
